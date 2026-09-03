@@ -81,7 +81,7 @@ Before installing AdvancedPedStudio, verify that your GTA V installation contain
    ```
 4. Launch GTA V and enter Story Mode. A subtitle will notify you when AdvancedPedStudio is initialized:
    ```text
-   Advanced Ped Studio ready! Press F11 to open studio.
+   Advanced Ped Studio ready! Press F6 to open studio.
    ```
 
 ---
@@ -90,7 +90,7 @@ Before installing AdvancedPedStudio, verify that your GTA V installation contain
 
 | Key / Input | Action | Description |
 | :--- | :--- | :--- |
-| **F11** | **Open / Close Studio** | Toggles the studio UI and automatically spawns/despawns the 3D preview ped. |
+| **F6** | **Open / Close Studio** | Toggles the studio UI and automatically spawns/despawns the 3D preview ped. |
 | **↑ / ↓** | **Menu Navigation** | Moves up and down across menu items and submenus. |
 | **← / →** | **Change Value / Sliders** | Cycles through ped models, walk styles, drawable IDs, and texture indices. |
 | **Enter** / **Numpad 5** | **Select / Activate** | Enters submenus, triggers the randomizer, or confirms save/load actions. |
@@ -120,7 +120,7 @@ Follow this step-by-step walkthrough to master every feature of AdvancedPedStudi
 ### Step 1: Launching the Studio Stage
 
 1. Walk your player character to an open, level area with clear visibility.
-2. Press **`F11`** on your keyboard.
+2. Press **`F6`** on your keyboard.
 3. The studio camera stage activates immediately:
    - A preview ped spawns exactly **10 feet (~3.05 meters)** directly in front of your character, facing you.
    - The preview ped is made invincible, frozen in place, has collisions turned off, and starts rotating smoothly at 0.85° per tick.
@@ -373,7 +373,7 @@ Prop_7_Texture = 0
 Contains detailed timestamped event traces:
 ```text
 [2026-09-03 16:00:10.123] Loaded 27 models from pedmodels.txt
-[2026-09-03 16:00:10.145] AdvancedPedStudio initialized successfully. Press F11 to open menu.
+[2026-09-03 16:00:10.145] AdvancedPedStudio initialized successfully. Press F6 to open menu.
 [2026-09-03 16:01:25.450] Successfully saved customized ped [s_f_y_stripper_01_a] (Friendly: s_f_y_stripper_01_a, Model: s_f_y_stripper_01) to scripts/customizedpeds.ini
 ```
 
@@ -412,7 +412,7 @@ AdvancedPedStudio/
 
 ## ❓ Troubleshooting & FAQ
 
-### Q: Pressing `F11` does not open the menu.
+### Q: Pressing `F6` does not open the menu.
 - Ensure **Script Hook V** (`ScriptHookV.dll`) and **Script Hook V .NET v3** (`ScriptHookVDotNet3.dll`) are correctly installed in your root GTA V directory.
 - Verify `LemonUI.SHVDN3.dll` is present in your `scripts/` folder.
 - Press **`Insert`** in-game to reload ScriptHookVDotNet scripts, then check `ScriptHookVDotNet.log` and `scripts/AdvancedPedStudio.log` for initialization errors.

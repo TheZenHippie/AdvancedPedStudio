@@ -20,16 +20,35 @@ public static class Logger
 
     public static string GetScriptsDirectory()
     {
-        const string explicitPath = @"D:\SteamLibrary\steamapps\common\Grand Theft Auto V\scripts";
-        if (Directory.Exists(explicitPath)) return explicitPath;
+        // 1. Resolve to the directory where this script assembly is located
+        try
+        {
+            string asmPath = Assembly.GetExecutingAssembly().Location;
+            if (!string.IsNullOrEmpty(asmPath))
+            {
+                string asmDir = Path.GetDirectoryName(asmPath);
+                if (!string.IsNullOrEmpty(asmDir) && Directory.Exists(asmDir))
+                {
+                    return asmDir;
+                }
+            }
+        }
+        catch { }
 
+        // 2. Fall back to the "scripts" directory under the GTA V main directory
         string baseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\', '/');
-        if (baseDir.EndsWith("scripts", StringComparison.OrdinalIgnoreCase)) return baseDir;
+        if (baseDir.EndsWith("scripts", StringComparison.OrdinalIgnoreCase))
+        {
+            return baseDir;
+        }
 
-        string subScripts = Path.Combine(baseDir, "scripts");
-        if (Directory.Exists(subScripts)) return subScripts;
+        string scriptsDir = Path.Combine(baseDir, "scripts");
+        if (!Directory.Exists(scriptsDir))
+        {
+            try { Directory.CreateDirectory(scriptsDir); } catch { }
+        }
 
-        return baseDir;
+        return scriptsDir;
     }
 
     private static readonly string LogFilePath = Path.Combine(GetScriptsDirectory(), "AdvancedPedStudio.log");

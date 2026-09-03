@@ -71,7 +71,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
-  <PropertyGroup>
-    <PostBuildEvent>COPY "$(TargetPath)" "D:\SteamLibrary\steamapps\common\Grand Theft Auto V\scripts"</PostBuildEvent>
+  <PropertyGroup Condition="'$(GTAV_DIR)' != '' and Exists('$(GTAV_DIR)\scripts')">
+    <PostBuildEvent>COPY "$(TargetPath)" "$(GTAV_DIR)\scripts"</PostBuildEvent>
   </PropertyGroup>
 </Project>

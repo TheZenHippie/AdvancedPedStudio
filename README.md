@@ -65,21 +65,24 @@ Before installing AdvancedPedStudio, verify that your GTA V installation contain
 
 ### Installation Steps
 
-1. Locate your Grand Theft Auto V root installation directory (e.g., `C:\Program Files\Rockstar Games\Grand Theft Auto V\` or `D:\SteamLibrary\steamapps\common\Grand Theft Auto V\`).
-2. Create a folder named `scripts` in your GTA V root directory if one does not already exist.
-3. Place the compiled mod files into your `scripts/` folder:
+1. Locate your Grand Theft Auto V root installation directory (where `GTA5.exe` is located).
+2. **Important - SHVDN File Placement:** All core Script Hook V and Script Hook V .NET files (`ScriptHookV.dll`, `ScriptHookVDotNet.asi`, `ScriptHookVDotNet3.dll`, etc.) belong directly in your **main GTA V root directory** and should **never** exist inside the `scripts/` directory.
+3. Ensure a `scripts/` directory exists under the main GTA V directory (create a new folder named `scripts` if one does not already exist).
+4. Place **`AdvancedPedStudio.dll`** and its associated files into the **`scripts/`** directory. No hardcoded paths are required—the script dynamically resolves paths relative to the GTA V installation:
    ```text
-   Grand Theft Auto V/
-   ├── ScriptHookV.dll
-   ├── ScriptHookVDotNet.asi
-   ├── ScriptHookVDotNet3.dll
-   └── scripts/
-       ├── AdvancedPedStudio.dll       <-- Mod binary
-       ├── LemonUI.SHVDN3.dll          <-- UI dependency
-       ├── pedmodels.txt               <-- Model list (auto-created if missing)
-       └── customizedpeds.ini          <-- Presets file (auto-created upon save)
+   Grand Theft Auto V/ (Main Directory)
+   ├── GTA5.exe
+   ├── ScriptHookV.dll             <-- Main GTA V directory
+   ├── ScriptHookVDotNet.asi        <-- Main GTA V directory
+   ├── ScriptHookVDotNet3.dll       <-- Main GTA V directory (SHVDN files do NOT go in scripts/)
+   └── scripts/                     <-- Scripts directory under main GTA V directory
+       ├── AdvancedPedStudio.dll    <-- Mod binary
+       ├── LemonUI.SHVDN3.dll       <-- UI library
+       ├── pedmodels.txt            <-- Ped model pool (auto-created if missing)
+       ├── customizedpeds.ini       <-- Saved presets file (auto-created upon save)
+       └── AdvancedPedStudio.log    <-- Runtime diagnostic log
    ```
-4. Launch GTA V and enter Story Mode. A subtitle will notify you when AdvancedPedStudio is initialized:
+5. Launch GTA V and enter Story Mode. A subtitle will notify you when AdvancedPedStudio is initialized:
    ```text
    Advanced Ped Studio ready! Press F6 to open studio.
    ```
@@ -403,9 +406,11 @@ AdvancedPedStudio/
    - `LemonUI.SHVDN3.dll`
 3. Set the build configuration to **Release | x64** or **Debug | x64**.
 4. Build the solution (**Ctrl + Shift + B**).
-5. The post-build event in `AdvancedPedStudio.csproj` automatically copies the output DLL to your GTA V `scripts/` directory:
+5. The compiled `AdvancedPedStudio.dll` can be copied directly to your GTA V `scripts/` directory, or automatically copied if you define a `GTAV_DIR` environment variable pointing to your GTA V root folder:
    ```xml
-   <PostBuildEvent>COPY "$(TargetPath)" "D:\SteamLibrary\steamapps\common\Grand Theft Auto V\scripts"</PostBuildEvent>
+   <PropertyGroup Condition="'$(GTAV_DIR)' != '' and Exists('$(GTAV_DIR)\scripts')">
+     <PostBuildEvent>COPY "$(TargetPath)" "$(GTAV_DIR)\scripts"</PostBuildEvent>
+   </PropertyGroup>
    ```
 
 ---

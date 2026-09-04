@@ -2225,6 +2225,21 @@ namespace AdvancedPedStudio
                 // Apply Movement Style
                 ApplyMovementStyle(spawnedPed, movementStyle);
 
+                // Register and attach APS decorators for task tracking across scripts
+                try
+                {
+                    Function.Call(Hash.DECOR_REGISTER, "APS_HasTaskLoop", 2); // 2 = bool
+                    Function.Call(Hash.DECOR_REGISTER, "APS_TaskType", 3);    // 3 = int (1=Anim, 2=Scenario, 0=None)
+                    Function.Call(Hash.DECOR_REGISTER, "APS_ProfileHash", 3); // 3 = int (hash of friendly name)
+
+                    bool hasLoop = (animType == "Animation" && !string.IsNullOrWhiteSpace(animDict) && !string.IsNullOrWhiteSpace(animClip))
+                                || (animType == "Scenario" && !string.IsNullOrWhiteSpace(scenario));
+                    Function.Call(Hash.DECOR_SET_BOOL, spawnedPed.Handle, "APS_HasTaskLoop", hasLoop);
+                    Function.Call(Hash.DECOR_SET_INT, spawnedPed.Handle, "APS_TaskType", animType == "Animation" ? 1 : (animType == "Scenario" ? 2 : 0));
+                    Function.Call(Hash.DECOR_SET_INT, spawnedPed.Handle, "APS_ProfileHash", Game.GenerateHash(displayName));
+                }
+                catch { }
+
                 // Apply Animation or Scenario
                 if (animType == "Animation" && !string.IsNullOrWhiteSpace(animDict) && !string.IsNullOrWhiteSpace(animClip))
                 {

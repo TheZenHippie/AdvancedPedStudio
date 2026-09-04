@@ -376,31 +376,31 @@ namespace AdvancedPedStudio
             new AnimationEntry("Stripper Idles", "Stripper Idle 05", "mini@strip_club@idles@stripper", "stripper_idle_05"),
             new AnimationEntry("Stripper Idles", "Stripper Idle 06", "mini@strip_club@idles@stripper", "stripper_idle_06"),
 
-            // Nightclub & Party Dances
-            new AnimationEntry("Nightclub & Party Dances", "Nightclub Solo Dance", "anim@amb@nightclub@mini@dance@dance_solo@female@var_a@", "med_center"),
-            new AnimationEntry("Nightclub & Party Dances", "Podium Dancer", "anim@amb@nightclub@dancers@podium_dancers@", "hi_dance_facedj_11_v1_female^1"),
-            new AnimationEntry("Nightclub & Party Dances", "Crowd / Lowrider Dance", "anim@amb@nightclub@dancers@crowddancers@lowriders@", "hi_dance_facedj_09_v1_male^1"),
-            new AnimationEntry("Nightclub & Party Dances", "Partying with Beer", "amb@world_human_partying@female@partying_beer@base", "base"),
-            new AnimationEntry("Nightclub & Party Dances", "Cheering (Crowd)", "amb@world_human_cheering@female_a", "base"),
+            // Nightclub Dances
+            new AnimationEntry("Nightclub Dances", "Nightclub Solo Dance", "anim@amb@nightclub@mini@dance@dance_solo@female@var_a@", "med_center"),
+            new AnimationEntry("Nightclub Dances", "Podium Dancer", "anim@amb@nightclub@dancers@podium_dancers@", "hi_dance_facedj_11_v1_female^1"),
+            new AnimationEntry("Nightclub Dances", "Crowd / Lowrider Dance", "anim@amb@nightclub@dancers@crowddancers@lowriders@", "hi_dance_facedj_09_v1_male^1"),
+            new AnimationEntry("Nightclub Dances", "Partying with Beer", "amb@world_human_partying@female@partying_beer@base", "base"),
+            new AnimationEntry("Nightclub Dances", "Cheering (Crowd)", "amb@world_human_cheering@female_a", "base"),
 
             // Drinks & Social
-            new AnimationEntry("Drinking & Social", "Drink Beer", "amb@world_human_drinking@beer@female@idle_a", "idle_a"),
-            new AnimationEntry("Drinking & Social", "Drink Beer & Wander", "amb@code_human_wander_drinking@beer@female@base", "idle_a"),
-            new AnimationEntry("Drinking & Social", "Smoke Cigarette", "amb@world_human_smoking@female@idle_a", "idle_a"),
-            new AnimationEntry("Drinking & Social", "Smoke Weed / Pot", "amb@world_human_smoking_pot@female@idle_a", "idle_a"),
-            new AnimationEntry("Drinking & Social", "Mobile Phone (Texting)", "amb@world_human_stand_mobile@female@text@base", "idle_a"),
-            new AnimationEntry("Drinking & Social", "Mobile Phone (Calling)", "amb@world_human_stand_mobile@female@call@base", "idle_a"),
+            new AnimationEntry("Drinks & Social", "Drink Beer", "amb@world_human_drinking@beer@female@idle_a", "idle_a"),
+            new AnimationEntry("Drinks & Social", "Drink Beer & Wander", "amb@code_human_wander_drinking@beer@female@base", "idle_a"),
+            new AnimationEntry("Drinks & Social", "Smoke Cigarette", "amb@world_human_smoking@female@idle_a", "idle_a"),
+            new AnimationEntry("Drinks & Social", "Smoke Weed / Pot", "amb@world_human_smoking_pot@female@idle_a", "idle_a"),
+            new AnimationEntry("Drinks & Social", "Mobile Phone (Texting)", "amb@world_human_stand_mobile@female@text@base", "idle_a"),
+            new AnimationEntry("Drinks & Social", "Mobile Phone (Calling)", "amb@world_human_stand_mobile@female@call@base", "idle_a"),
 
-            // Sunbathing & Relaxing
-            new AnimationEntry("Sunbathing & Relaxing", "Sunbathing (Front)", "amb@world_human_sunbathe@female@front@base", "idle_a"),
-            new AnimationEntry("Sunbathing & Relaxing", "Sunbathing (Back)", "amb@world_human_sunbathe@female@back@base", "idle_a"),
+            // Sunbathing
+            new AnimationEntry("Sunbathing", "Sunbathing (Front)", "amb@world_human_sunbathe@female@front@base", "idle_a"),
+            new AnimationEntry("Sunbathing", "Sunbathing (Back)", "amb@world_human_sunbathe@female@back@base", "idle_a"),
 
-            // Fitness & Exercises
-            new AnimationEntry("Fitness & Workouts", "Push Ups", "amb@world_human_push_ups@male@base", "base"),
-            new AnimationEntry("Fitness & Workouts", "Sit Ups", "amb@world_human_sit_ups@male@base", "base"),
-            new AnimationEntry("Fitness & Workouts", "Yoga Pose", "amb@world_human_yoga@female@base", "base"),
-            new AnimationEntry("Fitness & Workouts", "Muscle Flex (Front)", "amb@world_human_muscle_flex@arms_in_front@base", "base"),
-            new AnimationEntry("Fitness & Workouts", "Muscle Flex (Sides)", "amb@world_human_muscle_flex@arms_at_side@base", "base")
+            // Fitness
+            new AnimationEntry("Fitness", "Push Ups", "amb@world_human_push_ups@male@base", "base"),
+            new AnimationEntry("Fitness", "Sit Ups", "amb@world_human_sit_ups@male@base", "base"),
+            new AnimationEntry("Fitness", "Yoga Pose", "amb@world_human_yoga@female@base", "base"),
+            new AnimationEntry("Fitness", "Muscle Flex (Front)", "amb@world_human_muscle_flex@arms_in_front@base", "base"),
+            new AnimationEntry("Fitness", "Muscle Flex (Sides)", "amb@world_human_muscle_flex@arms_at_side@base", "base")
         };
 
         private static readonly ScenarioEntry[] CuratedScenarios = new[]
@@ -431,15 +431,15 @@ namespace AdvancedPedStudio
 
         private static readonly string[] AnimCategories = new[]
         {
-            "(None / Stand Still)",
+            "(None)",
             "Pole Dances",
             "Stripper Idles",
-            "Nightclub & Party Dances",
-            "Drinking & Social",
-            "Sunbathing & Relaxing",
-            "Fitness & Workouts",
-            "World Scenarios",
-            "Custom Animation"
+            "Nightclub Dances",
+            "Drinks & Social",
+            "Sunbathing",
+            "Fitness",
+            "Scenarios",
+            "Custom"
         };
 
         private readonly Dictionary<int, NativeListItem<int>> _drawableSliders = new Dictionary<int, NativeListItem<int>>();
@@ -453,7 +453,6 @@ namespace AdvancedPedStudio
         private Ped _previewPed;
         private Vector3 _previewAnchorPos = Vector3.Zero;
         private bool _isUpdatingSliders = false;
-        private readonly CayoInletSwimController _cayoInletSwimController = new CayoInletSwimController();
 
         public AdvancedPedStudio()
         {
@@ -469,17 +468,17 @@ namespace AdvancedPedStudio
                 _customizedPedsIniPath = Path.Combine(scriptsDir, "customizedpeds.ini");
 
                 _menuPool = new ObjectPool();
-                _mainMenu = new NativeMenu("Ped Studio", "Advanced Ped Customizer");
-                _clothingMenu = new NativeMenu("Clothing Variations", "Customize Drawable Components");
-                _propsMenu = new NativeMenu("Props & Accessories", "Customize Hats, Glasses & Props");
-                _animMenu = new NativeMenu("Movement & Animations", "Customize Movement Style & Animations");
-                _savedPedsMenu = new NativeMenu("Saved Customizations", "Load Saved Peds from INI");
-                _deleteSavedMenu = new NativeMenu("Delete Customization", "Remove Profile from INI");
+                _mainMenu = new NativeMenu("Ped Studio", "Ped Customizer & Spawner");
+                _clothingMenu = new NativeMenu("Clothing", "Clothing Variations");
+                _propsMenu = new NativeMenu("Props", "Props & Accessories");
+                _animMenu = new NativeMenu("Animations", "Movement & Animations");
+                _savedPedsMenu = new NativeMenu("Saved Outfits", "Load Saved Profiles");
+                _deleteSavedMenu = new NativeMenu("Delete Outfits", "Remove Profiles from INI");
 
                 LoadPedModels();
 
                 // 1. Model Selection Picker
-                _modelListItem = new NativeListItem<string>("Ped Model", "Scroll left/right to select and preview a ped model.", _pedModels.ToArray());
+                _modelListItem = new NativeListItem<string>("Model", "Select and preview ped model.", _pedModels.ToArray());
                 _modelListItem.ItemChanged += (sender, e) => UpdatePreview();
                 _mainMenu.Add(_modelListItem);
 
@@ -498,9 +497,9 @@ namespace AdvancedPedStudio
                 SetupClothingSlider("Top / Shirt", 11);
 
                 // 3. Setup Prop Sliders
-                SetupPropSlider("Hats / Helmets (Head)", 0);
-                SetupPropSlider("Glasses (Eyes)", 1);
-                SetupPropSlider("Ear Accessories", 2);
+                SetupPropSlider("Hats / Helmets", 0);
+                SetupPropSlider("Glasses", 1);
+                SetupPropSlider("Earrings", 2);
                 SetupPropSlider("Watches", 6);
                 SetupPropSlider("Bracelets", 7);
 
@@ -511,7 +510,7 @@ namespace AdvancedPedStudio
                 _mainMenu.AddSubMenu(_propsMenu);
 
                 // 4. Save Appearance to customizedpeds.ini Button
-                NativeItem saveAppearanceButton = new NativeItem("~g~Save Appearance to customizedpeds.ini~s~", "Saves model and clothing/props parameters to customizedpeds.ini.");
+                NativeItem saveAppearanceButton = new NativeItem("~g~Save Appearance~s~", "Saves model, clothing, and props to customizedpeds.ini.");
                 saveAppearanceButton.Activated += (sender, e) => SaveCustomizedPed();
                 _mainMenu.Add(saveAppearanceButton);
 
@@ -520,12 +519,12 @@ namespace AdvancedPedStudio
                 _mainMenu.AddSubMenu(_animMenu);
 
                 // 6. Interactive Spawner Slider: Choose fully customized & animated model, press Enter to spawn
-                _spawnProfileListItem = new NativeListItem<string>("Spawn Customized Ped", "Scroll left/right to choose a customized model. Press Enter to spawn it into the world.", new string[] { "[Current Studio Ped]" });
+                _spawnProfileListItem = new NativeListItem<string>("Spawn Profile", "Select saved profile. Press Enter to spawn into world.", new string[] { "[Current Ped]" });
                 _spawnProfileListItem.ItemChanged += (sender, e) =>
                 {
                     if (_isUpdatingSliders) return;
                     string selected = _spawnProfileListItem.SelectedItem;
-                    if (!string.IsNullOrWhiteSpace(selected) && selected != "[Current Studio Ped]")
+                    if (!string.IsNullOrWhiteSpace(selected) && selected != "[Current Ped]")
                     {
                         LoadCustomizedPedProfile(selected);
                     }
@@ -538,7 +537,7 @@ namespace AdvancedPedStudio
                 _mainMenu.Add(_spawnProfileListItem);
 
                 // Direct Spawn Button
-                _spawnButton = new NativeItem("~g~Spawn Selected Model~s~", "Spawns the chosen fully customized & animated model into the game world.");
+                _spawnButton = new NativeItem("~g~Spawn into World~s~", "Spawns chosen customized & animated model into the world.");
                 _spawnButton.Activated += (sender, e) =>
                 {
                     string selected = _spawnProfileListItem.SelectedItem;
@@ -554,23 +553,18 @@ namespace AdvancedPedStudio
                 _deleteSavedMenu.Opening += (sender, e) => RefreshSavedPedsMenu();
 
                 // Randomize Button
-                NativeItem randomizeButton = new NativeItem("Randomize Variations", "Randomizes clothing components and props on preview ped.");
+                NativeItem randomizeButton = new NativeItem("Randomize Clothing", "Randomizes clothing components and props on preview ped.");
                 randomizeButton.Activated += (sender, e) => RandomizeVariations();
                 _mainMenu.Add(randomizeButton);
 
                 // Reload pedmodels.txt button
-                NativeItem reloadModelsButton = new NativeItem("Reload pedmodels.txt", "Reloads the model list from scripts/pedmodels.txt.");
+                NativeItem reloadModelsButton = new NativeItem("Reload Models", "Reloads model list from scripts/pedmodels.txt.");
                 reloadModelsButton.Activated += (sender, e) =>
                 {
                     LoadPedModels();
                     RefreshModelList();
                 };
                 _mainMenu.Add(reloadModelsButton);
-
-                // Background Cayo Inlet Swimmer task toggle
-                NativeCheckboxItem cayoSwimCheckbox = new NativeCheckboxItem("Cayo Inlet Swimmer", "Background task: ambient peds at Cayo Perico inlet periodically swim out and back.", _cayoInletSwimController.Enabled);
-                cayoSwimCheckbox.CheckboxChanged += (s, e) => _cayoInletSwimController.Enabled = cayoSwimCheckbox.Checked;
-                _mainMenu.Add(cayoSwimCheckbox);
 
                 // Add to menu pool
                 _menuPool.Add(_mainMenu);
@@ -587,7 +581,6 @@ namespace AdvancedPedStudio
                 Aborted += (sender, e) =>
                 {
                     ClearPreview();
-                    _cayoInletSwimController.CleanUp();
                 };
 
                 Logger.Write("AdvancedPedStudio initialized successfully. Press F11 to open menu.");
@@ -658,7 +651,6 @@ namespace AdvancedPedStudio
         private void OnTick(object sender, EventArgs e)
         {
             _menuPool.Process();
-            _cayoInletSwimController.OnTick();
 
             bool anyMenuOpen = _menuPool.AreAnyVisible;
 
@@ -809,7 +801,7 @@ namespace AdvancedPedStudio
             _animMenu.Clear();
 
             // Movement Style Slider
-            _movementStyleListItem = new NativeListItem<string>("Movement Style", "Select movement & walk personality style.", MovementStyleList);
+            _movementStyleListItem = new NativeListItem<string>("Walk Style", "Select movement personality style.", MovementStyleList);
             _movementStyleListItem.ItemChanged += (sender, e) =>
             {
                 _currentMovementStyle = _movementStyleListItem.SelectedItem ?? "(Default)";
@@ -822,17 +814,17 @@ namespace AdvancedPedStudio
             _animMenu.Add(_movementStyleListItem);
 
             // Animation Category Selector
-            _animCategoryListItem = new NativeListItem<string>("Animation Category", "Filter animations by theme or world scenario.", AnimCategories);
+            _animCategoryListItem = new NativeListItem<string>("Category", "Filter animations by theme or scenario.", AnimCategories);
             _animCategoryListItem.ItemChanged += (sender, e) => OnAnimCategoryChanged();
             _animMenu.Add(_animCategoryListItem);
 
             // Animation / Scenario Selector
-            _animItem = new NativeListItem<string>("Animation / Scenario", "Select specific animation or scenario to audition.", new string[] { "(Stand Still)" });
+            _animItem = new NativeListItem<string>("Animation", "Select animation or scenario to audition.", new string[] { "(Stand Still)" });
             _animItem.ItemChanged += (sender, e) => ApplySelectedAnimation();
             _animMenu.Add(_animItem);
 
-            // Custom Dict & Clip fields (visible when category is Custom Animation)
-            _customDictItem = new NativeItem("Custom Dict", $"Dictionary: ~y~{_customAnimDict}~w~\nClick: Enter custom dictionary name.");
+            // Custom Dict & Clip fields (visible when category is Custom)
+            _customDictItem = new NativeItem("Custom Dict", "Click to enter custom animation dictionary name.");
             _customDictItem.Enabled = false;
             _customDictItem.Activated += (sender, e) =>
             {
@@ -840,13 +832,12 @@ namespace AdvancedPedStudio
                 if (!string.IsNullOrWhiteSpace(res))
                 {
                     _customAnimDict = res.Trim();
-                    _customDictItem.Description = $"Dictionary: ~y~{_customAnimDict}~w~\nClick: Enter custom dictionary name.";
                     ApplySelectedAnimation();
                 }
             };
             _animMenu.Add(_customDictItem);
 
-            _customClipItem = new NativeItem("Custom Clip", $"Clip: ~y~{_customAnimClip}~w~\nClick: Enter custom clip name.");
+            _customClipItem = new NativeItem("Custom Clip", "Click to enter custom animation clip name.");
             _customClipItem.Enabled = false;
             _customClipItem.Activated += (sender, e) =>
             {
@@ -854,19 +845,18 @@ namespace AdvancedPedStudio
                 if (!string.IsNullOrWhiteSpace(res))
                 {
                     _customAnimClip = res.Trim();
-                    _customClipItem.Description = $"Clip: ~y~{_customAnimClip}~w~\nClick: Enter custom clip name.";
                     ApplySelectedAnimation();
                 }
             };
             _animMenu.Add(_customClipItem);
 
-            // Play / Replay Animation button
-            NativeItem playAnimButton = new NativeItem("Play / Replay Animation", "Re-triggers playback of the selected animation or scenario on preview ped.");
+            // Play Animation button
+            NativeItem playAnimButton = new NativeItem("Play Animation", "Re-triggers playback of selected animation or scenario.");
             playAnimButton.Activated += (sender, e) => ApplySelectedAnimation();
             _animMenu.Add(playAnimButton);
 
             // Stop Animation button
-            NativeItem stopAnimButton = new NativeItem("Stop Animation / Stand Still", "Stops current animation and returns ped to standing idle.");
+            NativeItem stopAnimButton = new NativeItem("Stop Animation", "Stops current animation and returns ped to standing idle.");
             stopAnimButton.Activated += (sender, e) =>
             {
                 _currentAnimType = "None";
@@ -877,8 +867,8 @@ namespace AdvancedPedStudio
             };
             _animMenu.Add(stopAnimButton);
 
-            // Save Movement & Animation to INI button
-            NativeItem saveMovementAnimButton = new NativeItem("~g~Save Movement & Animation to customizedpeds.ini~s~", "Saves the selected movement style and animation to the current ped in customizedpeds.ini.");
+            // Save Movement & Animation button
+            NativeItem saveMovementAnimButton = new NativeItem("~g~Save Movement & Animation~s~", "Saves walk style and animation to customizedpeds.ini.");
             saveMovementAnimButton.Activated += (sender, e) => SaveMovementAndAnimation();
             _animMenu.Add(saveMovementAnimButton);
         }
@@ -887,10 +877,10 @@ namespace AdvancedPedStudio
         {
             if (_animCategoryListItem == null || _animItem == null) return;
 
-            string cat = _animCategoryListItem.SelectedItem ?? "(None / Stand Still)";
+            string cat = _animCategoryListItem.SelectedItem ?? "(None)";
             _animItem.Items.Clear();
 
-            if (cat == "(None / Stand Still)")
+            if (cat == "(None)")
             {
                 _animItem.Add("(Stand Still)");
                 _animItem.SelectedIndex = 0;
@@ -904,7 +894,7 @@ namespace AdvancedPedStudio
                 return;
             }
 
-            if (cat == "World Scenarios")
+            if (cat == "Scenarios")
             {
                 if (_customDictItem != null) _customDictItem.Enabled = false;
                 if (_customClipItem != null) _customClipItem.Enabled = false;
@@ -920,7 +910,7 @@ namespace AdvancedPedStudio
                 return;
             }
 
-            if (cat == "Custom Animation")
+            if (cat == "Custom")
             {
                 if (_customDictItem != null) _customDictItem.Enabled = true;
                 if (_customClipItem != null) _customClipItem.Enabled = true;
@@ -953,8 +943,8 @@ namespace AdvancedPedStudio
         {
             if (_animCategoryListItem == null || _animItem == null) return;
 
-            string cat = _animCategoryListItem.SelectedItem ?? "(None / Stand Still)";
-            if (cat == "(None / Stand Still)")
+            string cat = _animCategoryListItem.SelectedItem ?? "(None)";
+            if (cat == "(None)")
             {
                 _currentAnimType = "None";
                 _currentAnimDict = "";
@@ -964,7 +954,7 @@ namespace AdvancedPedStudio
                 return;
             }
 
-            if (cat == "World Scenarios")
+            if (cat == "Scenarios")
             {
                 string scName = _animItem.SelectedItem;
                 var entry = CuratedScenarios.FirstOrDefault(s => s.Name.Equals(scName, StringComparison.OrdinalIgnoreCase));
@@ -979,7 +969,7 @@ namespace AdvancedPedStudio
                 return;
             }
 
-            if (cat == "Custom Animation")
+            if (cat == "Custom")
             {
                 _currentAnimType = "Animation";
                 _currentAnimDict = _customAnimDict;
@@ -1095,7 +1085,7 @@ namespace AdvancedPedStudio
             {
                 if (_currentAnimType == "Scenario" && !string.IsNullOrEmpty(_currentScenario))
                 {
-                    int catIdx = _animCategoryListItem.Items.IndexOf("World Scenarios");
+                    int catIdx = _animCategoryListItem.Items.IndexOf("Scenarios");
                     if (catIdx >= 0)
                     {
                         _animCategoryListItem.SelectedIndex = catIdx;
@@ -1124,7 +1114,7 @@ namespace AdvancedPedStudio
                     }
                     else
                     {
-                        int catIdx = _animCategoryListItem.Items.IndexOf("Custom Animation");
+                        int catIdx = _animCategoryListItem.Items.IndexOf("Custom");
                         if (catIdx >= 0)
                         {
                             _animCategoryListItem.SelectedIndex = catIdx;
@@ -1136,7 +1126,7 @@ namespace AdvancedPedStudio
                 }
                 else
                 {
-                    int catIdx = _animCategoryListItem.Items.IndexOf("(None / Stand Still)");
+                    int catIdx = _animCategoryListItem.Items.IndexOf("(None)");
                     if (catIdx >= 0)
                     {
                         _animCategoryListItem.SelectedIndex = catIdx;
@@ -1781,7 +1771,7 @@ namespace AdvancedPedStudio
             {
                 string prevSelected = _spawnProfileListItem.SelectedItem;
                 _spawnProfileListItem.Items.Clear();
-                _spawnProfileListItem.Add("[Current Studio Ped]");
+                _spawnProfileListItem.Add("[Current Ped]");
 
                 var ini = new SimpleIniFile(_customizedPedsIniPath);
                 List<string> sections = ini.GetSectionNames();
@@ -2045,7 +2035,7 @@ namespace AdvancedPedStudio
                 var propIndices = new Dictionary<int, int>();
                 var propTextures = new Dictionary<int, int>();
 
-                if (string.IsNullOrWhiteSpace(sectionOrSpecial) || sectionOrSpecial == "[Current Studio Ped]")
+                if (string.IsNullOrWhiteSpace(sectionOrSpecial) || sectionOrSpecial == "[Current Ped]" || sectionOrSpecial == "[Current Studio Ped]")
                 {
                     Ped targetPed = GetCustomizationTargetPed();
                     modelName = _modelListItem.SelectedItem ?? "s_f_y_stripper_01";
@@ -2268,304 +2258,4 @@ namespace AdvancedPedStudio
             }
         }
     }
-
-    // ============================================================
-    // Global Swim State (Tracked for sequence coordination across scripts)
-    // ============================================================
-    public static class CayoSwimState
-    {
-        public static readonly HashSet<int> ActiveSwimmerHandles = new HashSet<int>();
-        public static bool IsPedSwimming(int handle) => ActiveSwimmerHandles.Contains(handle);
-    }
-
-    // ============================================================
-    // Background Task: Cayo Perico Inlet Ambient Swimmer Task
-    // ============================================================
-    public class CayoInletSwimController
-    {
-        // Cayo Perico West Beach Inlet center point
-        private static readonly Vector3 BeachCenter = new Vector3(4845.2031f, -4935.862f, 0f);
-        private const float SearchRadiusFeet = 70.0f;
-        private const float SearchRadiusMeters = SearchRadiusFeet * 0.3048f; // ~21.336 meters (70 feet)
-
-        // Target coordinate on shore where peds exit the water
-        private static readonly Vector3 ReturnShoreTarget = new Vector3(4863.0664f, -4927.760f, 1.504f);
-
-        private const int CheckIntervalMs = 2000;
-        private const int SwimChancePercent = 18; // Increased chance per 2-second check
-        private int _lastCheckTime = 0;
-        private readonly Random _random = new Random();
-
-        public bool Enabled { get; set; } = true;
-
-        private class ActiveSwimmer
-        {
-            public Ped Ped;
-            public Vector3 OriginalPosition;
-            public float OriginalHeading;
-            public int StartTime;
-            public int Phase; // 0 = straight to center point, 1 = swimming in circle (5s), 2 = straight back towards shore exit, 3 = returned
-            public int PhaseStartTime;
-            public float CircleStartAngle;
-            public int LastCircleUpdate;
-        }
-
-        private readonly List<ActiveSwimmer> _activeSwimmers = new List<ActiveSwimmer>();
-
-        public void OnTick()
-        {
-            if (!Enabled)
-            {
-                if (_activeSwimmers.Count > 0) CleanUp();
-                return;
-            }
-
-            int now = Game.GameTime;
-
-            // Process active swimmers state machine
-            for (int i = _activeSwimmers.Count - 1; i >= 0; i--)
-            {
-                var swimmer = _activeSwimmers[i];
-                Ped ped = swimmer.Ped;
-
-                // Safety guard: ped deleted, dead, or watchdog timeout (60 seconds)
-                if (ped == null || !ped.Exists() || !ped.IsAlive || (now - swimmer.StartTime) > 60000)
-                {
-                    ReleasePed(swimmer);
-                    _activeSwimmers.RemoveAt(i);
-                    continue;
-                }
-
-                int phaseElapsed = now - swimmer.PhaseStartTime;
-
-                switch (swimmer.Phase)
-                {
-                    case 0:
-                        // Leg 1: Moving in the straightest line possible to BeachCenter
-                        float distToCenter = ped.Position.DistanceTo(BeachCenter);
-                        bool isSwimming = Function.Call<bool>(Hash.IS_PED_SWIMMING, ped.Handle);
-
-                        // Reached center point
-                        if (distToCenter <= 3.2f || (isSwimming && distToCenter <= 4.2f && phaseElapsed > 6000))
-                        {
-                            swimmer.Phase = 1;
-                            swimmer.PhaseStartTime = now;
-                            swimmer.CircleStartAngle = (float)Math.Atan2(ped.Position.Y - BeachCenter.Y, ped.Position.X - BeachCenter.X);
-                            swimmer.LastCircleUpdate = 0;
-                            Logger.Write("Ped [{0}] reached center point. Swimming in circle for 5 seconds.", ped.Handle);
-                        }
-                        else if (phaseElapsed > 25000)
-                        {
-                            // Stalled or took too long, transition directly to return leg
-                            swimmer.Phase = 2;
-                            swimmer.PhaseStartTime = now;
-                            Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, ped.Handle, ReturnShoreTarget.X, ReturnShoreTarget.Y, ReturnShoreTarget.Z, 1.4f, -1, 0.0f, 0.0f);
-                        }
-                        break;
-
-                    case 1:
-                        // Leg 2: Swimming in a circle for 5 seconds
-                        const float circleDurationMs = 5000.0f;
-                        const float circleRadius = 3.5f;
-
-                        if (phaseElapsed < (int)circleDurationMs)
-                        {
-                            if (now - swimmer.LastCircleUpdate > 600)
-                            {
-                                swimmer.LastCircleUpdate = now;
-                                float progress = (phaseElapsed / circleDurationMs) * (float)(2.0 * Math.PI);
-                                float angle = swimmer.CircleStartAngle + progress;
-                                float targetX = BeachCenter.X + circleRadius * (float)Math.Cos(angle);
-                                float targetY = BeachCenter.Y + circleRadius * (float)Math.Sin(angle);
-
-                                Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, ped.Handle, targetX, targetY, 0.0f, 1.3f, -1, 0.0f, 0.0f);
-                            }
-                        }
-                        else
-                        {
-                            // 5 seconds completed! Swim straight back towards ReturnShoreTarget
-                            swimmer.Phase = 2;
-                            swimmer.PhaseStartTime = now;
-                            Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, ped.Handle, ReturnShoreTarget.X, ReturnShoreTarget.Y, ReturnShoreTarget.Z, 1.4f, -1, 0.0f, 0.0f);
-                            Logger.Write("Ped [{0}] finished circle swim. Swimming straight towards shore target {1}", ped.Handle, ReturnShoreTarget);
-                        }
-                        break;
-
-                    case 2:
-                        // Leg 3: Swimming straight back towards x4863.0664 y-4927.760 z1.504
-                        float distToShore = ped.Position.DistanceTo(ReturnShoreTarget);
-                        bool inWater = Function.Call<bool>(Hash.IS_PED_SWIMMING, ped.Handle) || Function.Call<bool>(Hash.IS_ENTITY_IN_WATER, ped.Handle);
-
-                        // Once ped reaches the shore target or exits the water
-                        if ((!inWater && distToShore < 3.5f) || distToShore < 2.0f || phaseElapsed > 30000)
-                        {
-                            ReleasePed(swimmer);
-                            _activeSwimmers.RemoveAt(i);
-                            Logger.Write("Ped [{0}] exited water at shore target. Resumed assigned task sequence.", ped.Handle);
-                        }
-                        break;
-                }
-            }
-
-            // Periodic search for a random nearby ped within 70 feet of BeachCenter
-            if (now - _lastCheckTime > CheckIntervalMs)
-            {
-                _lastCheckTime = now;
-
-                if (_activeSwimmers.Count < 2)
-                {
-                    if (_random.Next(0, 100) < SwimChancePercent)
-                    {
-                        TryStartRandomPedSwim();
-                    }
-                }
-            }
-        }
-
-        private void TryStartRandomPedSwim()
-        {
-            Ped player = Game.Player.Character;
-            // Only execute if player is within 350m of Cayo Perico inlet to minimize CPU usage
-            if (player == null || !player.Exists() || player.Position.DistanceTo(BeachCenter) > 350.0f)
-            {
-                return;
-            }
-
-            // Find peds within 70 feet (~21.336m) of BeachCenter
-            Ped[] nearby = World.GetNearbyPeds(BeachCenter, SearchRadiusMeters);
-            var eligible = new List<Ped>();
-
-            foreach (var p in nearby)
-            {
-                if (p == null || !p.Exists() || !p.IsAlive || p == player || p.IsInVehicle())
-                    continue;
-
-                // Don't select if already swimming or active
-                if (_activeSwimmers.Any(s => s.Ped == p))
-                    continue;
-
-                // Don't interrupt peds already in combat or ragdolling
-                if (p.IsInCombat || p.IsRagdoll)
-                    continue;
-
-                eligible.Add(p);
-            }
-
-            if (eligible.Count > 0)
-            {
-                // Select a random ped from the eligible candidates within 70 feet
-                Ped selectedPed = eligible[_random.Next(eligible.Count)];
-                StartSwimRoutine(selectedPed);
-            }
-        }
-
-        private void StartSwimRoutine(Ped ped)
-        {
-            Vector3 pedPos = ped.Position;
-            float pedHeading = ped.Heading;
-
-            CayoSwimState.ActiveSwimmerHandles.Add(ped.Handle);
-
-            // Setup ped attributes for safe swimming
-            Function.Call(Hash.CLEAR_PED_TASKS, ped.Handle);
-            Function.Call(Hash.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS, ped.Handle, true);
-            Function.Call(Hash.SET_PED_COMBAT_ATTRIBUTES, ped.Handle, 17, false);
-            Function.Call(Hash.SET_PED_DIES_IN_WATER, ped.Handle, false);
-            Function.Call(Hash.SET_PED_CONFIG_FLAG, ped.Handle, 64, true); // CPED_CONFIG_FLAG_DrownsInWater = false
-            Function.Call(Hash.SET_PED_MAX_TIME_UNDERWATER, ped.Handle, 600.0f);
-
-            // Leg 1: Move in the straightest line possible to BeachCenter
-            Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, ped.Handle, BeachCenter.X, BeachCenter.Y, BeachCenter.Z, 1.4f, -1, 0.0f, 0.0f);
-
-            _activeSwimmers.Add(new ActiveSwimmer
-            {
-                Ped = ped,
-                OriginalPosition = pedPos,
-                OriginalHeading = pedHeading,
-                StartTime = Game.GameTime,
-                Phase = 0,
-                PhaseStartTime = Game.GameTime
-            });
-
-            Logger.Write("Started Cayo inlet swim for ped [{0}] at {1} -> BeachCenter {2} (straight line)", ped.Handle, pedPos, BeachCenter);
-        }
-
-        private void ReleasePed(ActiveSwimmer swimmer)
-        {
-            if (swimmer == null) return;
-            Ped ped = swimmer.Ped;
-
-            if (ped != null && ped.Exists())
-            {
-                CayoSwimState.ActiveSwimmerHandles.Remove(ped.Handle);
-
-                if (ped.IsAlive)
-                {
-                    Function.Call(Hash.SET_BLOCKING_OF_NON_TEMPORARY_EVENTS, ped.Handle, false);
-                    Function.Call(Hash.SET_PED_CONFIG_FLAG, ped.Handle, 64, false); // DrownsInWater = default
-                    Function.Call(Hash.SET_PED_DIES_IN_WATER, ped.Handle, true);
-
-                    // Resume assigned task sequence:
-                    // 1. If spawned via PedCreator, resume its sequence steps directly
-                    bool resumedViaPedCreator = TryResumePedCreatorSequence(ped);
-
-                    if (!resumedViaPedCreator)
-                    {
-                        // 2. Ambient/world ped: walk in straight line back to original spot and resume scenario
-                        float distToOrig = ped.Position.DistanceTo(swimmer.OriginalPosition);
-                        if (distToOrig > 2.0f)
-                        {
-                            Function.Call(Hash.TASK_GO_STRAIGHT_TO_COORD, ped.Handle, swimmer.OriginalPosition.X, swimmer.OriginalPosition.Y, swimmer.OriginalPosition.Z, 1.3f, -1, swimmer.OriginalHeading, 0.0f);
-                        }
-                        else
-                        {
-                            Function.Call(Hash.TASK_USE_NEAREST_SCENARIO_TO_COORD, ped.Handle, swimmer.OriginalPosition.X, swimmer.OriginalPosition.Y, swimmer.OriginalPosition.Z, 15.0f, 0);
-                        }
-                    }
-                }
-            }
-        }
-
-        private static MethodInfo _resumeMethod = null;
-        private static bool _triedResolvingPedCreator = false;
-
-        private static bool TryResumePedCreatorSequence(Ped ped)
-        {
-            try
-            {
-                if (!_triedResolvingPedCreator)
-                {
-                    _triedResolvingPedCreator = true;
-                    var pcAsm = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "PedCreator");
-                    if (pcAsm != null)
-                    {
-                        var pcType = pcAsm.GetType("PedCreator.PedCreatorScript") ?? pcAsm.GetTypes().FirstOrDefault(t => t.Name == "PedCreatorScript");
-                        if (pcType != null)
-                        {
-                            _resumeMethod = pcType.GetMethod("ResumeSpawnedPedSequence", BindingFlags.Public | BindingFlags.Static);
-                        }
-                    }
-                }
-
-                if (_resumeMethod != null)
-                {
-                    object res = _resumeMethod.Invoke(null, new object[] { ped.Handle });
-                    if (res is bool b && b) return true;
-                }
-            }
-            catch { }
-            return false;
-        }
-
-        public void CleanUp()
-        {
-            foreach (var swimmer in _activeSwimmers)
-            {
-                ReleasePed(swimmer);
-            }
-            _activeSwimmers.Clear();
-            CayoSwimState.ActiveSwimmerHandles.Clear();
-        }
-    }
 }
-

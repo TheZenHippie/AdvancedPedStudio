@@ -23,7 +23,6 @@
    - [Step 3: Interactive Spawner Slider & World Deployment](#step-3-interactive-spawner-slider--world-deployment)
    - [Bonus: Rolling the Randomizer](#bonus-rolling-the-randomizer)
    - [Bonus: Managing & Deleting Profiles](#bonus-managing--deleting-profiles)
-   - [Bonus: Ambient Cayo Inlet Swimmer Task](#bonus-ambient-cayo-inlet-swimmer-task)
 6. [🎬 Curated Animation & Scenario Library](#-curated-animation--scenario-library)
 7. [🛡️ Ground Stability & Anti-Fall Engine](#️-ground-stability--anti-fall-engine)
 8. [📁 File Schemas & Configuration](#-file-schemas--configuration)
@@ -41,13 +40,13 @@
 - **Streamlined 3-Step Pipeline:** Model & Outfits $\rightarrow$ Movement & Animations $\rightarrow$ Slider Selection & In-Game Spawner.
 - **Turntable 3D Preview Stage:** Spawns an invincible preview ped ~10 feet in front of your character with smooth continuous 360° rotation for 3D inspection from all angles.
 - **Zero-Fall Ground Stability:** Advanced 3D downward raycasting (`GET_GROUND_Z_FOR_3D_COORD`), collision mesh streaming, entity position anchoring, and per-frame anti-fall safeguards prevent models from ever sinking or falling through terrain or interior floors.
+- **Clean, Overflow-Free LemonUI Interface:** Carefully engineered item titles, concise descriptions, and compact values prevent text clipping and UI overflow across all screen resolutions.
 - **Comprehensive 12-Slot Clothing Control:** Full drawable and texture sliders for Head/Face, Mask/Beard, Hair, Torso/Arms, Legs/Pants, Hands/Bags, Shoes, Accessories, Undershirts, Armor, Decals, and Tops.
 - **Smart Component Preservation:** Engineered multi-pass dependency order (`[8, 11, 4, 6, 0, 1, 2, 5, 7, 9, 10, 3, 4, 8, 11, 3]`) locks and reapplies torso and arm pairings whenever tops or undershirts change, preventing missing limb glitches.
 - **Full Props & Accessories Manager:** Equip or strip hats, helmets, sunglasses, ear pieces, watches, and bracelets (`-1` for none).
-- **Curated Movement & Animation Catalog:** 45+ walk styles, strip club pole dances, private dances, stripper idles, nightclub club dances, social/drinking routines, sunbathing, fitness workouts, ambient world scenarios, and custom dictionary/clip support.
+- **Curated Movement & Animation Catalog:** 45+ walk styles, strip club pole dances, private dances, stripper idles, nightclub dances, social/drinking routines, sunbathing, fitness workouts, ambient world scenarios, and custom dictionary/clip support.
 - **Interactive Spawner Slider:** Scroll through all saved customized & animated models on the main menu with live turntable preview, then press **Enter** to spawn the persistent entity directly into the GTA V world.
 - **Direct Disk-Write INI Persistence:** Thread-safe, immediate disk-flush saving with smart suffix generation (`model_a`, `model_b`, etc.) and friendly in-game name prompts.
-- **Ambient Cayo Perico Inlet Swimmer:** Autonomous background controller where beach peds naturally swim out to the Cayo Perico ocean inlet, execute circular swim patterns, and return to shore.
 
 ---
 
@@ -59,18 +58,18 @@ graph TD
     B --> B1["Select Ped Model (pedmodels.txt)"]
     B --> B2["Customize Clothing (Components 0-11)"]
     B --> B3["Customize Props & Accessories (0, 1, 2, 6, 7)"]
-    B --> B4["Action: Save Appearance to customizedpeds.ini"]
+    B --> B4["Action: Save Appearance (~g~Save Appearance~s~)"]
 
     A --> C["Step 2: Movement & Animations"]
-    C --> C1["Choose Movement Style (45+ walk styles)"]
-    C --> C2["Select Animation Category & Clip (or Scenario)"]
+    C --> C1["Choose Walk Style (45+ personalities)"]
+    C --> C2["Select Category & Animation (or Scenario)"]
     C --> C3["Live Preview on Anchored Turntable Stage"]
-    C --> C4["Action: Save Movement & Animation to customizedpeds.ini"]
+    C --> C4["Action: Save Routine (~g~Save Movement & Animation~s~)"]
 
     A --> D["Step 3: Interactive Spawner Slider"]
     D --> D1["Scroll Left / Right to Browse Saved Profiles"]
     D --> D2["Instant Turntable Preview of Outfits & Animations"]
-    D --> D3["Press Enter or 'Spawn Selected Model'"]
+    D --> D3["Press Enter or 'Spawn into World'"]
     D3 --> E["Persistent World Ped Created in GTA V with Outfit & Active Routine!"]
 ```
 
@@ -145,28 +144,28 @@ graph TD
 ### Step 1: Select Model, Customize Clothing & Save Appearance
 
 1. Walk your player character to any area (indoors or outdoors) and press **`F11`**.
-2. **Ped Model Slider:** Press **`←`** or **`→`** to select any base-game or add-on ped model from `pedmodels.txt`.
-3. **Clothing Variations Submenu:**
+2. **Model Slider:** Press **`←`** or **`→`** to select any base-game or add-on ped model from `pedmodels.txt`.
+3. **Clothing Submenu:**
    - Adjust drawables and textures across all 12 GTA V component slots (Tops, Undershirts, Legs, Shoes, Hair, Torso/Arms, Armor, etc.).
    - Smart Component Preservation protects against missing arm/torso meshes.
-4. **Props & Accessories Submenu:**
-   - Equip or remove hats/helmets, glasses, ear accessories, watches, and bracelets (`-1` = None).
+4. **Props Submenu:**
+   - Equip or remove hats/helmets, glasses, earrings, watches, and bracelets (`-1` = None).
 5. **Save Appearance:**
-   - Select **`Save Appearance to customizedpeds.ini`** and press **Enter**.
+   - Select **`~g~Save Appearance~s~`** and press **Enter**.
    - Type a custom friendly name (or accept the suggested sequential name, e.g. `s_f_y_stripper_01_a`) and confirm.
 
 ---
 
 ### Step 2: Set Movement Style, Animations & Save Routine
 
-1. Open the **`2. Movement & Animations`** submenu.
-2. **Movement Style:**
+1. Open the **`Animations`** submenu.
+2. **Walk Style:**
    - Choose from over 45 walk personality styles (e.g. `move_f@posh@`, `move_f@sexy`, `move_m@gangster@ng`, `move_f@heels@c`).
-3. **Animation Category & Selection:**
-   - Pick a category: *Pole Dances*, *Stripper Idles*, *Nightclub & Party Dances*, *Drinking & Social*, *Sunbathing & Relaxing*, *Fitness & Workouts*, *World Scenarios*, or *Custom Animation*.
+3. **Category & Animation Selection:**
+   - Pick a category: *Pole Dances*, *Stripper Idles*, *Nightclub Dances*, *Drinks & Social*, *Sunbathing*, *Fitness*, *Scenarios*, or *Custom*.
    - Select an animation or scenario. The turntable preview ped immediately begins performing the action live!
-4. **Save Movement & Animation:**
-   - Select **`Save Movement & Animation to customizedpeds.ini`** and press **Enter**.
+4. **Save Routine:**
+   - Select **`~g~Save Movement & Animation~s~`** and press **Enter**.
    - The walk style, animation dictionary, clip, and scenario are persisted directly to your profile.
 
 ---
@@ -174,10 +173,10 @@ graph TD
 ### Step 3: Interactive Spawner Slider & World Deployment
 
 1. Return to the Main Menu.
-2. Navigate to the **`Spawn Customized Ped`** slider item.
+2. Navigate to the **`Spawn Profile`** slider item.
 3. Press **`←`** or **`→`** to cycle through all your saved profiles from `customizedpeds.ini`:
    - As you scroll through profiles, the studio instantly loads that profile's model, clothing, props, and live animation onto the turntable stage for 360° inspection!
-4. Press **`Enter`** on the slider (or click **`Spawn Selected Model`**):
+4. Press **`Enter`** on the slider (or click **`~g~Spawn into World~s~`**):
    - The fully customized and animated ped is spawned directly into the game world in front of your character.
    - The spawned ped is persistent (`IsPersistent = true`), has full world collision, wears all clothing and props in dependency order, adopts the movement clipset, and loops the assigned animation/scenario indefinitely.
 
@@ -185,39 +184,14 @@ graph TD
 
 ### Bonus: Rolling the Randomizer
 
-Select **`Randomize Variations`** on the main menu and press **Enter** to instantly generate random clothing combinations and props on the preview ped.
+Select **`Randomize Clothing`** on the main menu and press **Enter** to instantly generate random clothing combinations and props on the preview ped.
 
 ---
 
 ### Bonus: Managing & Deleting Profiles
 
-- **`Saved Customizations` Submenu:** Review all saved presets and click any profile to audition it on stage.
-- **`Delete Customization` Submenu:** Safely delete outdated or unwanted profiles directly from `customizedpeds.ini`.
-
----
-
-### Bonus: Ambient Cayo Inlet Swimmer Task
-
-AdvancedPedStudio features an autonomous ambient controller for Cayo Perico's west beach inlet:
-
-```
-                          [ WEST BEACH INLET ]
-                                   *
-                              (Center Point)
-                                   ^  |
-                    Leg 1: Swim Out|  |Leg 2: Circle Swim (5s)
-                                   |  v
-                       Leg 3: Return to Shore Target
-                                   |
-                                   v
-                         [ SHORE EXIT COORD ]
-                                   |
-                Resume Scenario / PedCreator Task Sequence
-```
-
-- **Proximity-Gated:** Only active when the player is within 350 meters of the inlet (`X: 4845.2, Y: -4935.8`) to ensure 0% CPU overhead elsewhere.
-- **Autonomous Lifecycle:** Automatically directs nearby beach peds into the water, performs a circular swim routine, guides them back to shore, and restores their ambient scenario or `PedCreator` sequence.
-- **Toggle Control:** Toggle via the **`Cayo Inlet Swimmer`** checkbox on the main menu.
+- **`Saved Outfits` Submenu:** Review all saved presets and click any profile to audition it on stage.
+- **`Delete Outfits` Submenu:** Safely delete outdated or unwanted profiles directly from `customizedpeds.ini`.
 
 ---
 
@@ -229,12 +203,12 @@ AdvancedPedStudio includes a hand-curated catalog of verified high-quality anima
 | :--- | :--- |
 | **Pole Dances** | `pole_dance1`, `pole_dance2`, `pole_dance3`, Private Dance Parts 1-3, Private Dance Idle |
 | **Stripper Idles** | `stripper_idle_01` through `stripper_idle_06` |
-| **Nightclub & Party Dances** | Club Solo Dance (`med_center`), Podium Dancer (`hi_dance_facedj_11`), Crowd Dancer, Partying with Beer, Crowd Cheering |
-| **Drinking & Social** | Drink Beer, Drink Beer & Wander, Smoke Cigarette, Smoke Weed/Pot, Mobile Phone Texting, Mobile Phone Calling |
-| **Sunbathing & Relaxing** | Sunbathing Front, Sunbathing Back |
-| **Fitness & Workouts** | Push Ups, Sit Ups, Yoga Poses, Muscle Flex (Front & Sides) |
-| **World Ambient Scenarios** | `WORLD_HUMAN_PARTYING`, `WORLD_HUMAN_SMOKING`, `WORLD_HUMAN_SMOKING_POT`, `WORLD_HUMAN_DRINKING`, `WORLD_HUMAN_CHEERING`, `WORLD_HUMAN_SUNBATHE`, `WORLD_HUMAN_YOGA`, `WORLD_HUMAN_COP_IDLES`, `WORLD_HUMAN_GUARD_STAND`, `WORLD_HUMAN_STRIP_WATCH_STAND`, `WORLD_HUMAN_PROSTITUTE_HIGH_CLASS`, `WORLD_HUMAN_JOG_STANDING`, `WORLD_HUMAN_LEANING`, `WORLD_HUMAN_BINOCULARS`, `WORLD_HUMAN_TOURIST_MAP` |
-| **Custom Animation Input** | Direct user input for any GTA V animation dictionary and clip name |
+| **Nightclub Dances** | Club Solo Dance (`med_center`), Podium Dancer (`hi_dance_facedj_11`), Crowd Dancer, Partying with Beer, Crowd Cheering |
+| **Drinks & Social** | Drink Beer, Drink Beer & Wander, Smoke Cigarette, Smoke Weed/Pot, Mobile Phone Texting, Mobile Phone Calling |
+| **Sunbathing** | Sunbathing Front, Sunbathing Back |
+| **Fitness** | Push Ups, Sit Ups, Yoga Poses, Muscle Flex (Front & Sides) |
+| **Scenarios** | `WORLD_HUMAN_PARTYING`, `WORLD_HUMAN_SMOKING`, `WORLD_HUMAN_SMOKING_POT`, `WORLD_HUMAN_DRINKING`, `WORLD_HUMAN_CHEERING`, `WORLD_HUMAN_SUNBATHE`, `WORLD_HUMAN_YOGA`, `WORLD_HUMAN_COP_IDLES`, `WORLD_HUMAN_GUARD_STAND`, `WORLD_HUMAN_STRIP_WATCH_STAND`, `WORLD_HUMAN_PROSTITUTE_HIGH_CLASS`, `WORLD_HUMAN_JOG_STANDING`, `WORLD_HUMAN_LEANING`, `WORLD_HUMAN_BINOCULARS`, `WORLD_HUMAN_TOURIST_MAP` |
+| **Custom** | Direct user input for any GTA V animation dictionary and clip name |
 
 ---
 
@@ -446,7 +420,7 @@ AdvancedPedStudio/
 - AdvancedPedStudio implements an engineered **Smart Component Preservation** engine that reapplies Torso/Arm drawables (Slot 3) and Pants (Slot 4) whenever Tops (Slot 11) or Undershirts (Slot 8) change, eliminating invisible limb glitches.
 
 ### Q: How do I spawn a ped with custom animations into the game world?
-- Use the **`Spawn Customized Ped`** slider on the main menu. Press Left/Right to choose your profile (or `[Current Studio Ped]`) and press **Enter**. The ped spawns directly in front of your character, fully dressed, with collision enabled, and actively looping the animation routine.
+- Use the **`Spawn Profile`** slider on the main menu. Press Left/Right to choose your profile (or `[Current Ped]`) and press **Enter**. The ped spawns directly in front of your character, fully dressed, with collision enabled, and actively looping the animation routine.
 
 ### Q: Can external scripts parse `customizedpeds.ini`?
 - Yes. Every component and prop variation is stored with dual formatting (both combined `Component_0 = 0,0` and discrete `Component_0_Drawable = 0` / `Component_0_Texture = 0`), making it seamless to read from C#, Lua, or Python scripts.

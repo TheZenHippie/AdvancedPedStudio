@@ -17,11 +17,20 @@ using Hash = GTA.Native.Hash;
 public static class Logger
 {
     private static readonly object LogLock = new object();
+    private static string _scriptsDir;
+    private static string _logFilePath;
+    private static bool _dirChecked;
 
     public static string GetScriptsDirectory()
     {
+        if (_scriptsDir != null) return _scriptsDir;
+
         const string explicitPath = @"D:\SteamLibrary\steamapps\common\Grand Theft Auto V\scripts";
-        if (Directory.Exists(explicitPath)) return explicitPath;
+        if (Directory.Exists(explicitPath))
+        {
+            _scriptsDir = explicitPath;
+            return _scriptsDir;
+        }
 
         // 1. Resolve to the directory where this script assembly is located
         try
@@ -32,7 +41,8 @@ public static class Logger
                 string asmDir = Path.GetDirectoryName(asmPath);
                 if (!string.IsNullOrEmpty(asmDir) && Directory.Exists(asmDir))
                 {
-                    return asmDir;
+                    _scriptsDir = asmDir;
+                    return _scriptsDir;
                 }
             }
         }
@@ -42,7 +52,8 @@ public static class Logger
         string baseDir = AppDomain.CurrentDomain.BaseDirectory.TrimEnd('\\', '/');
         if (baseDir.EndsWith("scripts", StringComparison.OrdinalIgnoreCase))
         {
-            return baseDir;
+            _scriptsDir = baseDir;
+            return _scriptsDir;
         }
 
         string scriptsDir = Path.Combine(baseDir, "scripts");
@@ -51,10 +62,21 @@ public static class Logger
             try { Directory.CreateDirectory(scriptsDir); } catch { }
         }
 
-        return scriptsDir;
+        _scriptsDir = scriptsDir;
+        return _scriptsDir;
     }
 
-    private static readonly string LogFilePath = Path.Combine(GetScriptsDirectory(), "AdvancedPedStudio.log");
+    private static string LogFilePath
+    {
+        get
+        {
+            if (_logFilePath == null)
+            {
+                _logFilePath = Path.Combine(GetScriptsDirectory(), "AdvancedPedStudio.log");
+            }
+            return _logFilePath;
+        }
+    }
 
     public static void Write(object message)
     {
@@ -77,14 +99,19 @@ public static class Logger
         {
             lock (LogLock)
             {
-                string dir = Path.GetDirectoryName(LogFilePath);
-                if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                string path = LogFilePath;
+                if (!_dirChecked)
                 {
-                    Directory.CreateDirectory(dir);
+                    string dir = Path.GetDirectoryName(path);
+                    if (!string.IsNullOrEmpty(dir) && !Directory.Exists(dir))
+                    {
+                        Directory.CreateDirectory(dir);
+                    }
+                    _dirChecked = true;
                 }
 
                 string logLine = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}] {message}{Environment.NewLine}";
-                using (var fs = new FileStream(LogFilePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite, 4096, FileOptions.WriteThrough))
+                using (var fs = new FileStream(path, FileMode.Append, FileAccess.Write, FileShare.ReadWrite, 4096, FileOptions.WriteThrough))
                 using (var sw = new StreamWriter(fs, Encoding.UTF8))
                 {
                     sw.Write(logLine);
@@ -138,33 +165,36 @@ namespace AdvancedPedStudio
 
                 try
                 {
-                    string[] lines = File.ReadAllLines(_filePath);
-                    string currentSection = "";
-
-                    foreach (string rawLine in lines)
+                    using (var fs = new FileStream(_filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var reader = new StreamReader(fs, Encoding.UTF8))
                     {
-                        string line = rawLine.Trim();
-                        if (string.IsNullOrWhiteSpace(line) || line.StartsWith(";") || line.StartsWith("#"))
+                        string currentSection = "";
+                        string line;
+                        while ((line = reader.ReadLine()) != null)
                         {
-                            continue;
-                        }
-
-                        if (line.StartsWith("[") && line.EndsWith("]"))
-                        {
-                            currentSection = line.Substring(1, line.Length - 2).Trim();
-                            if (!_sections.ContainsKey(currentSection))
+                            line = line.Trim();
+                            if (string.IsNullOrWhiteSpace(line) || line.StartsWith(";") || line.StartsWith("#"))
                             {
-                                _sections[currentSection] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                                continue;
                             }
-                        }
-                        else if (!string.IsNullOrEmpty(currentSection))
-                        {
-                            int eqIdx = line.IndexOf('=');
-                            if (eqIdx > 0)
+
+                            if (line.StartsWith("[") && line.EndsWith("]"))
                             {
-                                string key = line.Substring(0, eqIdx).Trim();
-                                string val = line.Substring(eqIdx + 1).Trim();
-                                _sections[currentSection][key] = val;
+                                currentSection = line.Substring(1, line.Length - 2).Trim();
+                                if (!_sections.ContainsKey(currentSection))
+                                {
+                                    _sections[currentSection] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                                }
+                            }
+                            else if (!string.IsNullOrEmpty(currentSection))
+                            {
+                                int eqIdx = line.IndexOf('=');
+                                if (eqIdx > 0)
+                                {
+                                    string key = line.Substring(0, eqIdx).Trim();
+                                    string val = line.Substring(eqIdx + 1).Trim();
+                                    _sections[currentSection][key] = val;
+                                }
                             }
                         }
                     }
@@ -200,11 +230,12 @@ namespace AdvancedPedStudio
         {
             lock (_fileLock)
             {
-                if (!_sections.ContainsKey(section))
+                if (!_sections.TryGetValue(section, out var keys))
                 {
-                    _sections[section] = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    keys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                    _sections[section] = keys;
                 }
-                _sections[section][key] = value?.ToString() ?? "";
+                keys[key] = value?.ToString() ?? "";
             }
         }
 
@@ -220,27 +251,25 @@ namespace AdvancedPedStudio
                         Directory.CreateDirectory(dir);
                     }
 
-                    StringBuilder sb = new StringBuilder();
-                    sb.AppendLine("; ============================================================");
-                    sb.AppendLine("; AdvancedPedStudio - Saved Customized Peds");
-                    sb.AppendLine($"; Last Updated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
-                    sb.AppendLine("; ============================================================");
-                    sb.AppendLine();
-
-                    foreach (var section in _sections)
-                    {
-                        sb.AppendLine($"[{section.Key}]");
-                        foreach (var kvp in section.Value)
-                        {
-                            sb.AppendLine($"{kvp.Key} = {kvp.Value}");
-                        }
-                        sb.AppendLine();
-                    }
-
                     using (var fs = new FileStream(_filePath, FileMode.Create, FileAccess.Write, FileShare.ReadWrite, 4096, FileOptions.WriteThrough))
                     using (var sw = new StreamWriter(fs, Encoding.UTF8))
                     {
-                        sw.Write(sb.ToString());
+                        sw.WriteLine("; ============================================================");
+                        sw.WriteLine("; AdvancedPedStudio - Saved Customized Peds");
+                        sw.WriteLine($"; Last Updated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
+                        sw.WriteLine("; ============================================================");
+                        sw.WriteLine();
+
+                        foreach (var section in _sections)
+                        {
+                            sw.WriteLine($"[{section.Key}]");
+                            foreach (var kvp in section.Value)
+                            {
+                                sw.WriteLine($"{kvp.Key} = {kvp.Value}");
+                            }
+                            sw.WriteLine();
+                        }
+
                         sw.Flush();
                         fs.Flush(true);
                     }
@@ -308,37 +337,6 @@ namespace AdvancedPedStudio
 
         // Dependency order for applying components so that Tops/Undershirts never wipe out Torso/Arms/Legs
         private static readonly int[] ComponentApplyOrder = { 8, 11, 4, 6, 0, 1, 2, 5, 7, 9, 10, 3, 4, 8, 11, 3 };
-
-        private readonly string _pedModelsPath;
-        private readonly string _customizedPedsIniPath;
-
-        private readonly List<string> _pedModels = new List<string>();
-
-        private readonly ObjectPool _menuPool;
-        private readonly NativeMenu _mainMenu;
-        private readonly NativeMenu _clothingMenu;
-        private readonly NativeMenu _propsMenu;
-        private readonly NativeMenu _animMenu;
-        private readonly NativeMenu _savedPedsMenu;
-        private readonly NativeMenu _deleteSavedMenu;
-
-        private NativeListItem<string> _modelListItem;
-        private NativeListItem<string> _movementStyleListItem;
-        private NativeListItem<string> _animCategoryListItem;
-        private NativeListItem<string> _animItem;
-        private NativeItem _customDictItem;
-        private NativeItem _customClipItem;
-        private NativeListItem<string> _spawnProfileListItem;
-        private NativeItem _spawnButton;
-
-        private string _currentMovementStyle = "(Default)";
-        private string _currentAnimType = "None"; // "None", "Animation", "Scenario"
-        private string _currentAnimDict = "";
-        private string _currentAnimClip = "";
-        private string _currentScenario = "";
-        private string _customAnimDict = "mini@strip_club@pole_dance@pole_dance1";
-        private string _customAnimClip = "base";
-        private string _lastSavedSection = "";
 
         private static readonly string[] MovementStyleList = new string[]
         {
@@ -442,6 +440,66 @@ namespace AdvancedPedStudio
             "Custom"
         };
 
+        // Pre-indexed lookup caches for O(1) animation and scenario searches
+        private static readonly Dictionary<string, List<AnimationEntry>> AnimationsByCategory = new Dictionary<string, List<AnimationEntry>>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, AnimationEntry> AnimationsByName = new Dictionary<string, AnimationEntry>(StringComparer.OrdinalIgnoreCase);
+        private static readonly Dictionary<string, ScenarioEntry> ScenariosByName = new Dictionary<string, ScenarioEntry>(StringComparer.OrdinalIgnoreCase);
+
+        static AdvancedPedStudio()
+        {
+            foreach (var anim in CuratedAnimations)
+            {
+                if (!AnimationsByCategory.TryGetValue(anim.Category, out var list))
+                {
+                    list = new List<AnimationEntry>();
+                    AnimationsByCategory[anim.Category] = list;
+                }
+                list.Add(anim);
+                AnimationsByName[anim.Name] = anim;
+            }
+
+            foreach (var sc in CuratedScenarios)
+            {
+                ScenariosByName[sc.Name] = sc;
+            }
+        }
+
+        private readonly string _pedModelsPath;
+        private readonly string _customizedPedsIniPath;
+        private readonly string _configIniPath;
+        private readonly SimpleIniFile _customizedPedsIni;
+
+        private Keys _activationKey = Keys.F11;
+
+        private readonly List<string> _pedModels = new List<string>();
+
+        private readonly ObjectPool _menuPool;
+        private readonly NativeMenu _mainMenu;
+        private readonly NativeMenu _clothingMenu;
+        private readonly NativeMenu _propsMenu;
+        private readonly NativeMenu _animMenu;
+        private readonly NativeMenu _savedPedsMenu;
+        private readonly NativeMenu _deleteSavedMenu;
+
+        private NativeListItem<string> _modelListItem;
+        private NativeListItem<string> _movementStyleListItem;
+        private NativeListItem<string> _animCategoryListItem;
+        private NativeListItem<string> _animItem;
+        private NativeItem _customDictItem;
+        private NativeItem _customClipItem;
+        private NativeListItem<string> _spawnProfileListItem;
+        private NativeItem _spawnButton;
+        private NativeItem _reloadSettingsButton;
+
+        private string _currentMovementStyle = "(Default)";
+        private string _currentAnimType = "None"; // "None", "Animation", "Scenario"
+        private string _currentAnimDict = "";
+        private string _currentAnimClip = "";
+        private string _currentScenario = "";
+        private string _customAnimDict = "mini@strip_club@pole_dance@pole_dance1";
+        private string _customAnimClip = "base";
+        private string _lastSavedSection = "";
+
         private readonly Dictionary<int, NativeListItem<int>> _drawableSliders = new Dictionary<int, NativeListItem<int>>();
         private readonly Dictionary<int, NativeListItem<int>> _textureSliders = new Dictionary<int, NativeListItem<int>>();
         private readonly Dictionary<int, NativeListItem<int>> _propSliders = new Dictionary<int, NativeListItem<int>>();
@@ -466,6 +524,10 @@ namespace AdvancedPedStudio
 
                 _pedModelsPath = Path.Combine(scriptsDir, "pedmodels.txt");
                 _customizedPedsIniPath = Path.Combine(scriptsDir, "customizedpeds.ini");
+                _configIniPath = Path.Combine(scriptsDir, "AdvancedPedStudio.ini");
+                _customizedPedsIni = new SimpleIniFile(_customizedPedsIniPath);
+
+                LoadSettings();
 
                 _menuPool = new ObjectPool();
                 _mainMenu = new NativeMenu("Ped Studio", "Ped Customizer & Spawner");
@@ -566,6 +628,16 @@ namespace AdvancedPedStudio
                 };
                 _mainMenu.Add(reloadModelsButton);
 
+                // Reload Settings button
+                _reloadSettingsButton = new NativeItem("Reload Settings", $"Reloads {_configIniPath} (Activation Key: {_activationKey}).");
+                _reloadSettingsButton.Activated += (sender, e) =>
+                {
+                    LoadSettings();
+                    _reloadSettingsButton.Description = $"Reloads {_configIniPath} (Activation Key: {_activationKey}).";
+                    Notification.Show($"~g~Settings Reloaded~s~\nActivation Key: ~y~{_activationKey}~s~");
+                };
+                _mainMenu.Add(_reloadSettingsButton);
+
                 // Add to menu pool
                 _menuPool.Add(_mainMenu);
                 _menuPool.Add(_clothingMenu);
@@ -583,12 +655,57 @@ namespace AdvancedPedStudio
                     ClearPreview();
                 };
 
-                Logger.Write("AdvancedPedStudio initialized successfully. Press F11 to open menu.");
-                GTA.UI.Screen.ShowSubtitle("~g~Advanced Ped Studio~s~ ready! Press ~y~F11~s~ to open studio.", 3500);
+                Logger.Write("AdvancedPedStudio initialized successfully. Activation key: {0}.", _activationKey);
+                GTA.UI.Screen.ShowSubtitle($"~g~Advanced Ped Studio~s~ ready! Press ~y~{_activationKey}~s~ to open studio.", 3500);
             }
             catch (Exception ex)
             {
                 Logger.Error("Error during AdvancedPedStudio initialization", ex);
+            }
+        }
+
+        private void LoadSettings()
+        {
+            try
+            {
+                if (!File.Exists(_configIniPath))
+                {
+                    string defaultContent = "; ============================================================\r\n" +
+                                           "; AdvancedPedStudio - Configuration Settings\r\n" +
+                                           "; ============================================================\r\n\r\n" +
+                                           "[Settings]\r\n" +
+                                           "; Key to open and close the Advanced Ped Studio menu.\r\n" +
+                                           "; Default: F11\r\n" +
+                                           "; Supported keys include any valid .NET System.Windows.Forms.Keys name:\r\n" +
+                                           "; Examples: F11, F10, F9, F8, F7, F6, F5, F3, K, O, J, Insert, PageUp\r\n" +
+                                           "ActivationKey = F11\r\n";
+                    File.WriteAllText(_configIniPath, defaultContent, Encoding.UTF8);
+                }
+
+                var configIni = new SimpleIniFile(_configIniPath);
+                string keyVal = configIni.GetValue("Settings", "ActivationKey", "");
+
+                // Backwards compatibility: check customizedpeds.ini if not found in AdvancedPedStudio.ini
+                if (string.IsNullOrWhiteSpace(keyVal) && File.Exists(_customizedPedsIniPath))
+                {
+                    keyVal = _customizedPedsIni.GetValue("Settings", "ActivationKey", "");
+                }
+
+                if (!string.IsNullOrWhiteSpace(keyVal) && Enum.TryParse<Keys>(keyVal.Trim(), true, out Keys parsedKey) && parsedKey != Keys.None)
+                {
+                    _activationKey = parsedKey;
+                    Logger.Write("Loaded ActivationKey: {0}", _activationKey);
+                }
+                else
+                {
+                    _activationKey = Keys.F11;
+                    Logger.Write("Using default ActivationKey: {0}", _activationKey);
+                }
+            }
+            catch (Exception ex)
+            {
+                _activationKey = Keys.F11;
+                Logger.Error("Error loading settings from INI", ex);
             }
         }
 
@@ -668,15 +785,11 @@ namespace AdvancedPedStudio
                         Function.Call(Hash.SET_ENTITY_COLLISION, _previewPed.Handle, true, true);
                     }
 
-                    // Keep non-player collision active while passing through player
-                    Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, _previewPed.Handle, Game.Player.Character.Handle, false);
-                    Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, Game.Player.Character.Handle, _previewPed.Handle, false);
-
                     Vector3 currentPos = _previewPed.Position;
                     bool fellThroughGround = currentPos.Z < (_previewAnchorPos.Z - 0.15f);
-                    float hDistSq = (currentPos.X - _previewAnchorPos.X) * (currentPos.X - _previewAnchorPos.X) +
-                                    (currentPos.Y - _previewAnchorPos.Y) * (currentPos.Y - _previewAnchorPos.Y);
-                    bool driftedAway = hDistSq > (0.35f * 0.35f);
+                    float dx = currentPos.X - _previewAnchorPos.X;
+                    float dy = currentPos.Y - _previewAnchorPos.Y;
+                    bool driftedAway = (dx * dx + dy * dy) > (0.35f * 0.35f);
 
                     if (fellThroughGround || driftedAway)
                     {
@@ -693,7 +806,7 @@ namespace AdvancedPedStudio
 
         private void OnKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.F11)
+            if (e.KeyCode == _activationKey)
             {
                 if (_menuPool.AreAnyVisible)
                 {
@@ -731,13 +844,14 @@ namespace AdvancedPedStudio
         private Vector3 GetAccurateGroundPosition(Vector3 targetPos)
         {
             Ped player = Game.Player.Character;
-            float playerZ = player.Position.Z;
+            Vector3 playerPos = player.Position;
+            float playerZ = playerPos.Z;
 
             // Request collision mesh loading at the target coordinate
             Function.Call(Hash.REQUEST_COLLISION_AT_COORD, targetPos.X, targetPos.Y, playerZ);
 
             OutputArgument outZ = new OutputArgument();
-            // Raycast downward from eye level (player.Position.Z + 1.5f) to detect immediate ground/floor
+            // Raycast downward from eye level (playerPos.Z + 1.5f) to detect immediate ground/floor
             bool found = Function.Call<bool>(Hash.GET_GROUND_Z_FOR_3D_COORD, targetPos.X, targetPos.Y, playerZ + 1.5f, outZ, false);
             if (found)
             {
@@ -776,7 +890,7 @@ namespace AdvancedPedStudio
 
             if (string.IsNullOrEmpty(clipSet) || clipSet.Equals("(Default)", StringComparison.OrdinalIgnoreCase))
             {
-                Function.Call(Hash.RESET_PED_MOVEMENT_CLIPSET, ped, 0.25f);
+                Function.Call(Hash.RESET_PED_MOVEMENT_CLIPSET, ped.Handle, 0.25f);
                 return;
             }
 
@@ -792,7 +906,8 @@ namespace AdvancedPedStudio
 
             if (Function.Call<bool>(Hash.HAS_CLIP_SET_LOADED, clipSet))
             {
-                Function.Call(Hash.SET_PED_MOVEMENT_CLIPSET, ped, clipSet, 0.25f);
+                Function.Call(Hash.SET_PED_MOVEMENT_CLIPSET, ped.Handle, clipSet, 0.25f);
+                Function.Call(Hash.REMOVE_CLIP_SET, clipSet);
             }
         }
 
@@ -927,11 +1042,14 @@ namespace AdvancedPedStudio
             if (_customDictItem != null) _customDictItem.Enabled = false;
             if (_customClipItem != null) _customClipItem.Enabled = false;
 
-            var matching = CuratedAnimations.Where(a => a.Category.Equals(cat, StringComparison.OrdinalIgnoreCase)).ToList();
-            foreach (var a in matching)
+            if (AnimationsByCategory.TryGetValue(cat, out var matching))
             {
-                _animItem.Add(a.Name);
+                foreach (var a in matching)
+                {
+                    _animItem.Add(a.Name);
+                }
             }
+
             if (_animItem.Items.Count > 0)
             {
                 _animItem.SelectedIndex = 0;
@@ -957,8 +1075,7 @@ namespace AdvancedPedStudio
             if (cat == "Scenarios")
             {
                 string scName = _animItem.SelectedItem;
-                var entry = CuratedScenarios.FirstOrDefault(s => s.Name.Equals(scName, StringComparison.OrdinalIgnoreCase));
-                if (entry != null)
+                if (!string.IsNullOrEmpty(scName) && ScenariosByName.TryGetValue(scName, out var entry))
                 {
                     _currentAnimType = "Scenario";
                     _currentScenario = entry.Scenario;
@@ -980,8 +1097,7 @@ namespace AdvancedPedStudio
             }
 
             string animName = _animItem.SelectedItem;
-            var animEntry = CuratedAnimations.FirstOrDefault(a => a.Category.Equals(cat, StringComparison.OrdinalIgnoreCase) && a.Name.Equals(animName, StringComparison.OrdinalIgnoreCase));
-            if (animEntry != null)
+            if (!string.IsNullOrEmpty(animName) && AnimationsByName.TryGetValue(animName, out var animEntry))
             {
                 _currentAnimType = "Animation";
                 _currentAnimDict = animEntry.Dictionary;
@@ -1016,8 +1132,8 @@ namespace AdvancedPedStudio
                 target.IsCollisionEnabled = true;
                 Function.Call(Hash.SET_ENTITY_COLLISION, target.Handle, true, true);
                 target.IsPositionFrozen = true; // Anchored in place so model never sinks or drifts while animating
-                Function.Call(Hash.CLEAR_PED_TASKS, target);
-                Function.Call(Hash.TASK_PLAY_ANIM, target, animDict, animClip, 8.0f, -8.0f, -1, 1, 0.0f, false, false, false);
+                Function.Call(Hash.CLEAR_PED_TASKS, target.Handle);
+                Function.Call(Hash.TASK_PLAY_ANIM, target.Handle, animDict, animClip, 8.0f, -8.0f, -1, 1, 0.0f, false, false, false);
                 Function.Call(Hash.REMOVE_ANIM_DICT, animDict);
             }
             else
@@ -1036,8 +1152,8 @@ namespace AdvancedPedStudio
             target.IsCollisionEnabled = true;
             Function.Call(Hash.SET_ENTITY_COLLISION, target.Handle, true, true);
             target.IsPositionFrozen = false;
-            Function.Call(Hash.CLEAR_PED_TASKS, target);
-            Function.Call(Hash.TASK_START_SCENARIO_IN_PLACE, target, scenario, 0, true);
+            Function.Call(Hash.CLEAR_PED_TASKS, target.Handle);
+            Function.Call(Hash.TASK_START_SCENARIO_IN_PLACE, target.Handle, scenario, 0, true);
         }
 
         private void StopPreviewAnimation()
@@ -1045,7 +1161,7 @@ namespace AdvancedPedStudio
             Ped target = GetCustomizationTargetPed();
             if (target != null && target.Exists() && target.IsAlive)
             {
-                Function.Call(Hash.CLEAR_PED_TASKS, target);
+                Function.Call(Hash.CLEAR_PED_TASKS, target.Handle);
                 target.Task.StandStill(-1);
                 target.IsCollisionEnabled = true;
                 Function.Call(Hash.SET_ENTITY_COLLISION, target.Handle, true, true);
@@ -1177,7 +1293,8 @@ namespace AdvancedPedStudio
 
             if (_previewPed != null && _previewPed.Exists())
             {
-                _previewPed.Heading = (Game.Player.Character.Heading + 180.0f) % 360.0f;
+                Ped player = Game.Player.Character;
+                _previewPed.Heading = (player.Heading + 180.0f) % 360.0f;
                 _previewPed.IsInvincible = true;
                 _previewPed.IsCollisionEnabled = true;
                 Function.Call(Hash.SET_ENTITY_COLLISION, _previewPed.Handle, true, true);
@@ -1187,8 +1304,8 @@ namespace AdvancedPedStudio
 
                 // Snap to ground coordinates and disable collision with player character
                 Function.Call(Hash.SET_PED_COORDS_KEEP_VEHICLE, _previewPed.Handle, spawnPos.X, spawnPos.Y, spawnPos.Z);
-                Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, _previewPed.Handle, Game.Player.Character.Handle, false);
-                Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, Game.Player.Character.Handle, _previewPed.Handle, false);
+                Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, _previewPed.Handle, player.Handle, false);
+                Function.Call(Hash.SET_ENTITY_NO_COLLISION_ENTITY, player.Handle, _previewPed.Handle, false);
 
                 ApplyMovementStyle(_previewPed, _currentMovementStyle);
                 ReapplyCurrentAnimationOnPreview();
@@ -1214,33 +1331,31 @@ namespace AdvancedPedStudio
             Ped targetPed = GetCustomizationTargetPed();
 
             int currentDrawable = (targetPed != null && targetPed.Exists())
-                ? Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed, componentId)
+                ? Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed.Handle, componentId)
                 : 0;
             int currentTexture = (targetPed != null && targetPed.Exists())
-                ? Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed, componentId)
+                ? Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed.Handle, componentId)
                 : 0;
 
             int maxDrawables = (targetPed != null && targetPed.Exists())
-                ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_DRAWABLE_VARIATIONS, targetPed, componentId))
+                ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_DRAWABLE_VARIATIONS, targetPed.Handle, componentId))
                 : 1;
 
-            List<int> drawableItems = new List<int>();
+            List<int> drawableItems = new List<int>(maxDrawables);
             for (int i = 0; i < maxDrawables; i++) drawableItems.Add(i);
 
             NativeListItem<int> drawableSlider = new NativeListItem<int>(componentName, $"Select {componentName.ToLower()} model / variation.", drawableItems.ToArray());
-            int dIdx = drawableItems.IndexOf(currentDrawable);
-            drawableSlider.SelectedIndex = dIdx >= 0 ? dIdx : 0;
+            drawableSlider.SelectedIndex = (currentDrawable >= 0 && currentDrawable < drawableItems.Count) ? currentDrawable : 0;
 
             int maxTextures = (targetPed != null && targetPed.Exists())
-                ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_TEXTURE_VARIATIONS, targetPed, componentId, currentDrawable))
+                ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_TEXTURE_VARIATIONS, targetPed.Handle, componentId, currentDrawable))
                 : 1;
 
-            List<int> textureItems = new List<int>();
+            List<int> textureItems = new List<int>(maxTextures);
             for (int i = 0; i < maxTextures; i++) textureItems.Add(i);
 
             NativeListItem<int> textureSlider = new NativeListItem<int>("Texture", $"Select {componentName.ToLower()} color / texture.", textureItems.ToArray());
-            int tIdx = textureItems.IndexOf(currentTexture);
-            textureSlider.SelectedIndex = tIdx >= 0 ? tIdx : 0;
+            textureSlider.SelectedIndex = (currentTexture >= 0 && currentTexture < textureItems.Count) ? currentTexture : 0;
 
             drawableSlider.ItemChanged += (sender, e) =>
             {
@@ -1250,30 +1365,30 @@ namespace AdvancedPedStudio
                 if (currentPed == null || !currentPed.Exists()) return;
 
                 int selectedDrawable = drawableSlider.SelectedItem;
-                Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed, componentId, selectedDrawable, 0, 0);
+                Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed.Handle, componentId, selectedDrawable, 0, 0);
 
                 // Preserve Torso/Arms (3) when changing Tops (11) or Undershirts (8)
-                if ((componentId == 11 || componentId == 8) && _drawableSliders.ContainsKey(3))
+                if ((componentId == 11 || componentId == 8) && _drawableSliders.TryGetValue(3, out var torsoSlider))
                 {
-                    int torsoDrawable = _drawableSliders[3].SelectedItem;
-                    int torsoTexture = _textureSliders.ContainsKey(3) ? _textureSliders[3].SelectedItem : 0;
-                    Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed, 3, torsoDrawable, torsoTexture, 0);
+                    int torsoDrawable = torsoSlider.SelectedItem;
+                    int torsoTexture = _textureSliders.TryGetValue(3, out var torsoTexSlider) ? torsoTexSlider.SelectedItem : 0;
+                    Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed.Handle, 3, torsoDrawable, torsoTexture, 0);
                 }
 
                 // Preserve Legs/Shoes pairing
-                if (componentId == 11 && _drawableSliders.ContainsKey(4))
+                if (componentId == 11 && _drawableSliders.TryGetValue(4, out var legsSlider))
                 {
-                    int legsDrawable = _drawableSliders[4].SelectedItem;
-                    int legsTexture = _textureSliders.ContainsKey(4) ? _textureSliders[4].SelectedItem : 0;
-                    Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed, 4, legsDrawable, legsTexture, 0);
+                    int legsDrawable = legsSlider.SelectedItem;
+                    int legsTexture = _textureSliders.TryGetValue(4, out var legsTexSlider) ? legsTexSlider.SelectedItem : 0;
+                    Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed.Handle, 4, legsDrawable, legsTexture, 0);
                 }
 
-                int newMaxTextures = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_TEXTURE_VARIATIONS, currentPed, componentId, selectedDrawable));
-                List<int> newTextureItems = new List<int>();
-                for (int i = 0; i < newMaxTextures; i++) newTextureItems.Add(i);
-
-                textureSlider.Items.Clear();
-                foreach (var item in newTextureItems) textureSlider.Add(item);
+                int newMaxTextures = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_TEXTURE_VARIATIONS, currentPed.Handle, componentId, selectedDrawable));
+                if (textureSlider.Items.Count != newMaxTextures)
+                {
+                    textureSlider.Items.Clear();
+                    for (int i = 0; i < newMaxTextures; i++) textureSlider.Add(i);
+                }
                 textureSlider.SelectedIndex = 0;
             };
 
@@ -1288,14 +1403,14 @@ namespace AdvancedPedStudio
                 {
                     int selectedDrawable = drawableSlider.SelectedItem;
                     int selectedTexture = textureSlider.SelectedItem;
-                    Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed, componentId, selectedDrawable, selectedTexture, 0);
+                    Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed.Handle, componentId, selectedDrawable, selectedTexture, 0);
 
                     // Preserve Torso/Arms (3) when changing Tops (11) or Undershirts (8)
-                    if ((componentId == 11 || componentId == 8) && _drawableSliders.ContainsKey(3))
+                    if ((componentId == 11 || componentId == 8) && _drawableSliders.TryGetValue(3, out var torsoSlider))
                     {
-                        int torsoDrawable = _drawableSliders[3].SelectedItem;
-                        int torsoTexture = _textureSliders.ContainsKey(3) ? _textureSliders[3].SelectedItem : 0;
-                        Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed, 3, torsoDrawable, torsoTexture, 0);
+                        int torsoDrawable = torsoSlider.SelectedItem;
+                        int torsoTexture = _textureSliders.TryGetValue(3, out var torsoTexSlider) ? torsoTexSlider.SelectedItem : 0;
+                        Function.Call(Hash.SET_PED_COMPONENT_VARIATION, currentPed.Handle, 3, torsoDrawable, torsoTexture, 0);
                     }
                 }
             };
@@ -1312,33 +1427,32 @@ namespace AdvancedPedStudio
             Ped targetPed = GetCustomizationTargetPed();
 
             int currentProp = (targetPed != null && targetPed.Exists())
-                ? Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed, propId)
+                ? Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed.Handle, propId)
                 : -1;
             int currentTexture = (targetPed != null && targetPed.Exists() && currentProp >= 0)
-                ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed, propId)
+                ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed.Handle, propId)
                 : 0;
 
             int maxProps = (targetPed != null && targetPed.Exists())
-                ? Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_DRAWABLE_VARIATIONS, targetPed, propId)
+                ? Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_DRAWABLE_VARIATIONS, targetPed.Handle, propId)
                 : 0;
 
-            List<int> propItems = new List<int> { -1 };
+            List<int> propItems = new List<int>(maxProps + 1) { -1 };
             for (int i = 0; i < maxProps; i++) propItems.Add(i);
 
             NativeListItem<int> propSlider = new NativeListItem<int>(propName, $"Change {propName.ToLower()} model (-1 = None).", propItems.ToArray());
-            int pIdx = propItems.IndexOf(currentProp);
-            propSlider.SelectedIndex = pIdx >= 0 ? pIdx : 0;
+            int pIdx = currentProp >= 0 ? (currentProp + 1) : 0;
+            propSlider.SelectedIndex = (pIdx < propItems.Count) ? pIdx : 0;
 
             int maxTextures = (targetPed != null && targetPed.Exists() && currentProp >= 0)
-                ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_TEXTURE_VARIATIONS, targetPed, propId, currentProp))
+                ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_TEXTURE_VARIATIONS, targetPed.Handle, propId, currentProp))
                 : 1;
 
-            List<int> textureItems = new List<int>();
+            List<int> textureItems = new List<int>(maxTextures);
             for (int i = 0; i < maxTextures; i++) textureItems.Add(i);
 
             NativeListItem<int> textureSlider = new NativeListItem<int>("Texture", $"Change {propName.ToLower()} texture / color.", textureItems.ToArray());
-            int tIdx = textureItems.IndexOf(currentTexture);
-            textureSlider.SelectedIndex = tIdx >= 0 ? tIdx : 0;
+            textureSlider.SelectedIndex = (currentTexture >= 0 && currentTexture < textureItems.Count) ? currentTexture : 0;
 
             propSlider.ItemChanged += (sender, e) =>
             {
@@ -1350,20 +1464,23 @@ namespace AdvancedPedStudio
                 int selectedProp = propSlider.SelectedItem;
                 if (selectedProp == -1)
                 {
-                    Function.Call(Hash.CLEAR_PED_PROP, currentPed, propId);
-                    textureSlider.Items.Clear();
-                    textureSlider.Add(0);
+                    Function.Call(Hash.CLEAR_PED_PROP, currentPed.Handle, propId);
+                    if (textureSlider.Items.Count != 1)
+                    {
+                        textureSlider.Items.Clear();
+                        textureSlider.Add(0);
+                    }
                     textureSlider.SelectedIndex = 0;
                 }
                 else
                 {
-                    Function.Call(Hash.SET_PED_PROP_INDEX, currentPed, propId, selectedProp, 0, true);
-                    int newMaxTextures = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_TEXTURE_VARIATIONS, currentPed, propId, selectedProp));
-                    List<int> newTextureItems = new List<int>();
-                    for (int i = 0; i < newMaxTextures; i++) newTextureItems.Add(i);
-
-                    textureSlider.Items.Clear();
-                    foreach (var item in newTextureItems) textureSlider.Add(item);
+                    Function.Call(Hash.SET_PED_PROP_INDEX, currentPed.Handle, propId, selectedProp, 0, true);
+                    int newMaxTextures = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_TEXTURE_VARIATIONS, currentPed.Handle, propId, selectedProp));
+                    if (textureSlider.Items.Count != newMaxTextures)
+                    {
+                        textureSlider.Items.Clear();
+                        for (int i = 0; i < newMaxTextures; i++) textureSlider.Add(i);
+                    }
                     textureSlider.SelectedIndex = 0;
                 }
             };
@@ -1379,7 +1496,7 @@ namespace AdvancedPedStudio
                 if (selectedProp >= 0 && textureSlider.Items.Count > 0)
                 {
                     int selectedTexture = textureSlider.SelectedItem;
-                    Function.Call(Hash.SET_PED_PROP_INDEX, currentPed, propId, selectedProp, selectedTexture, true);
+                    Function.Call(Hash.SET_PED_PROP_INDEX, currentPed.Handle, propId, selectedProp, selectedTexture, true);
                 }
             };
 
@@ -1402,27 +1519,31 @@ namespace AdvancedPedStudio
                 {
                     int compId = kvp.Key;
                     var dSlider = kvp.Value;
-                    var tSlider = _textureSliders.ContainsKey(compId) ? _textureSliders[compId] : null;
+                    _textureSliders.TryGetValue(compId, out var tSlider);
 
-                    int maxDrawables = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_DRAWABLE_VARIATIONS, targetPed, compId));
-                    int actualDrawable = Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed, compId);
+                    int maxDrawables = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_DRAWABLE_VARIATIONS, targetPed.Handle, compId));
+                    int actualDrawable = Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed.Handle, compId);
 
-                    dSlider.Items.Clear();
-                    for (int i = 0; i < maxDrawables; i++) dSlider.Add(i);
+                    if (dSlider.Items.Count != maxDrawables)
+                    {
+                        dSlider.Items.Clear();
+                        for (int i = 0; i < maxDrawables; i++) dSlider.Add(i);
+                    }
 
-                    int dIdx = dSlider.Items.IndexOf(actualDrawable);
-                    dSlider.SelectedIndex = dIdx >= 0 ? dIdx : 0;
+                    dSlider.SelectedIndex = (actualDrawable >= 0 && actualDrawable < dSlider.Items.Count) ? actualDrawable : 0;
 
                     if (tSlider != null)
                     {
-                        int maxTextures = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_TEXTURE_VARIATIONS, targetPed, compId, actualDrawable));
-                        int actualTexture = Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed, compId);
+                        int maxTextures = Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_TEXTURE_VARIATIONS, targetPed.Handle, compId, actualDrawable));
+                        int actualTexture = Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed.Handle, compId);
 
-                        tSlider.Items.Clear();
-                        for (int i = 0; i < maxTextures; i++) tSlider.Add(i);
+                        if (tSlider.Items.Count != maxTextures)
+                        {
+                            tSlider.Items.Clear();
+                            for (int i = 0; i < maxTextures; i++) tSlider.Add(i);
+                        }
 
-                        int tIdx = tSlider.Items.IndexOf(actualTexture);
-                        tSlider.SelectedIndex = tIdx >= 0 ? tIdx : 0;
+                        tSlider.SelectedIndex = (actualTexture >= 0 && actualTexture < tSlider.Items.Count) ? actualTexture : 0;
                     }
                 }
 
@@ -1430,32 +1551,38 @@ namespace AdvancedPedStudio
                 {
                     int propId = kvp.Key;
                     var pSlider = kvp.Value;
-                    var tSlider = _propTextureSliders.ContainsKey(propId) ? _propTextureSliders[propId] : null;
+                    _propTextureSliders.TryGetValue(propId, out var tSlider);
 
-                    int maxProps = Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_DRAWABLE_VARIATIONS, targetPed, propId);
-                    int actualProp = Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed, propId);
+                    int maxProps = Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_DRAWABLE_VARIATIONS, targetPed.Handle, propId);
+                    int actualProp = Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed.Handle, propId);
+                    int expectedPropCount = maxProps + 1;
 
-                    pSlider.Items.Clear();
-                    pSlider.Add(-1);
-                    for (int i = 0; i < maxProps; i++) pSlider.Add(i);
+                    if (pSlider.Items.Count != expectedPropCount)
+                    {
+                        pSlider.Items.Clear();
+                        pSlider.Add(-1);
+                        for (int i = 0; i < maxProps; i++) pSlider.Add(i);
+                    }
 
-                    int pIdx = pSlider.Items.IndexOf(actualProp);
-                    pSlider.SelectedIndex = pIdx >= 0 ? pIdx : 0;
+                    int pIdx = actualProp >= 0 ? (actualProp + 1) : 0;
+                    pSlider.SelectedIndex = (pIdx < pSlider.Items.Count) ? pIdx : 0;
 
                     if (tSlider != null)
                     {
                         int maxTextures = (actualProp >= 0)
-                            ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_TEXTURE_VARIATIONS, targetPed, propId, actualProp))
+                            ? Math.Max(1, Function.Call<int>(Hash.GET_NUMBER_OF_PED_PROP_TEXTURE_VARIATIONS, targetPed.Handle, propId, actualProp))
                             : 1;
                         int actualTexture = (actualProp >= 0)
-                            ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed, propId)
+                            ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed.Handle, propId)
                             : 0;
 
-                        tSlider.Items.Clear();
-                        for (int i = 0; i < maxTextures; i++) tSlider.Add(i);
+                        if (tSlider.Items.Count != maxTextures)
+                        {
+                            tSlider.Items.Clear();
+                            for (int i = 0; i < maxTextures; i++) tSlider.Add(i);
+                        }
 
-                        int tIdx = tSlider.Items.IndexOf(actualTexture);
-                        tSlider.SelectedIndex = tIdx >= 0 ? tIdx : 0;
+                        tSlider.SelectedIndex = (actualTexture >= 0 && actualTexture < tSlider.Items.Count) ? actualTexture : 0;
                     }
                 }
             }
@@ -1472,8 +1599,8 @@ namespace AdvancedPedStudio
 
             try
             {
-                Function.Call(Hash.SET_PED_RANDOM_COMPONENT_VARIATION, targetPed, 0);
-                Function.Call(Hash.SET_PED_RANDOM_PROPS, targetPed);
+                Function.Call(Hash.SET_PED_RANDOM_COMPONENT_VARIATION, targetPed.Handle, 0);
+                Function.Call(Hash.SET_PED_RANDOM_PROPS, targetPed.Handle);
                 RefreshClothingSliders();
             }
             catch (Exception ex)
@@ -1502,8 +1629,8 @@ namespace AdvancedPedStudio
 
             try
             {
-                var ini = new SimpleIniFile(_customizedPedsIniPath);
-                List<string> existingSections = ini.GetSectionNames();
+                _customizedPedsIni.Load();
+                List<string> existingSections = _customizedPedsIni.GetSectionNames();
 
                 // Find all existing suffixes used for this model name
                 HashSet<string> usedSuffixes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -1557,49 +1684,49 @@ namespace AdvancedPedStudio
                     sectionName = defaultSuggestion;
                 }
 
-                ini.SetValue(sectionName, "FriendlyName", friendlyName);
-                ini.SetValue(sectionName, "Model", modelName);
-                ini.SetValue(sectionName, "Option", suffix);
-                ini.SetValue(sectionName, "MovementStyle", _currentMovementStyle);
-                ini.SetValue(sectionName, "AnimationType", _currentAnimType ?? "None");
-                ini.SetValue(sectionName, "AnimDict", _currentAnimDict ?? "");
-                ini.SetValue(sectionName, "AnimClip", _currentAnimClip ?? "");
-                ini.SetValue(sectionName, "Scenario", _currentScenario ?? "");
-                ini.SetValue(sectionName, "SavedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                _customizedPedsIni.SetValue(sectionName, "FriendlyName", friendlyName);
+                _customizedPedsIni.SetValue(sectionName, "Model", modelName);
+                _customizedPedsIni.SetValue(sectionName, "Option", suffix);
+                _customizedPedsIni.SetValue(sectionName, "MovementStyle", _currentMovementStyle);
+                _customizedPedsIni.SetValue(sectionName, "AnimationType", _currentAnimType ?? "None");
+                _customizedPedsIni.SetValue(sectionName, "AnimDict", _currentAnimDict ?? "");
+                _customizedPedsIni.SetValue(sectionName, "AnimClip", _currentAnimClip ?? "");
+                _customizedPedsIni.SetValue(sectionName, "Scenario", _currentScenario ?? "");
+                _customizedPedsIni.SetValue(sectionName, "SavedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 
                 // Save Components (0-11) directly from sliders & ped state
                 foreach (int compId in _componentIds)
                 {
-                    int drawable = _drawableSliders.ContainsKey(compId) && _drawableSliders[compId].Items.Count > 0
-                        ? _drawableSliders[compId].SelectedItem
-                        : Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed, compId);
+                    int drawable = _drawableSliders.TryGetValue(compId, out var dSlider) && dSlider.Items.Count > 0
+                        ? dSlider.SelectedItem
+                        : Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed.Handle, compId);
 
-                    int texture = _textureSliders.ContainsKey(compId) && _textureSliders[compId].Items.Count > 0
-                        ? _textureSliders[compId].SelectedItem
-                        : Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed, compId);
+                    int texture = _textureSliders.TryGetValue(compId, out var tSlider) && tSlider.Items.Count > 0
+                        ? tSlider.SelectedItem
+                        : Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed.Handle, compId);
 
-                    ini.SetValue(sectionName, $"Component_{compId}", $"{drawable},{texture}");
-                    ini.SetValue(sectionName, $"Component_{compId}_Drawable", drawable);
-                    ini.SetValue(sectionName, $"Component_{compId}_Texture", texture);
+                    _customizedPedsIni.SetValue(sectionName, $"Component_{compId}", $"{drawable},{texture}");
+                    _customizedPedsIni.SetValue(sectionName, $"Component_{compId}_Drawable", drawable);
+                    _customizedPedsIni.SetValue(sectionName, $"Component_{compId}_Texture", texture);
                 }
 
                 // Save Props (0, 1, 2, 6, 7) directly from sliders & ped state
                 foreach (int propId in _propIds)
                 {
-                    int propIndex = _propSliders.ContainsKey(propId) && _propSliders[propId].Items.Count > 0
-                        ? _propSliders[propId].SelectedItem
-                        : Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed, propId);
+                    int propIndex = _propSliders.TryGetValue(propId, out var pSlider) && pSlider.Items.Count > 0
+                        ? pSlider.SelectedItem
+                        : Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed.Handle, propId);
 
-                    int propTexture = _propTextureSliders.ContainsKey(propId) && _propTextureSliders[propId].Items.Count > 0
-                        ? _propTextureSliders[propId].SelectedItem
-                        : (propIndex >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed, propId) : 0);
+                    int propTexture = _propTextureSliders.TryGetValue(propId, out var ptSlider) && ptSlider.Items.Count > 0
+                        ? ptSlider.SelectedItem
+                        : (propIndex >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed.Handle, propId) : 0);
 
-                    ini.SetValue(sectionName, $"Prop_{propId}", $"{propIndex},{propTexture}");
-                    ini.SetValue(sectionName, $"Prop_{propId}_Index", propIndex);
-                    ini.SetValue(sectionName, $"Prop_{propId}_Texture", propTexture);
+                    _customizedPedsIni.SetValue(sectionName, $"Prop_{propId}", $"{propIndex},{propTexture}");
+                    _customizedPedsIni.SetValue(sectionName, $"Prop_{propId}_Index", propIndex);
+                    _customizedPedsIni.SetValue(sectionName, $"Prop_{propId}_Texture", propTexture);
                 }
 
-                bool saved = ini.Save();
+                bool saved = _customizedPedsIni.Save();
 
                 if (saved && File.Exists(_customizedPedsIniPath))
                 {
@@ -1633,11 +1760,11 @@ namespace AdvancedPedStudio
 
             try
             {
-                var ini = new SimpleIniFile(_customizedPedsIniPath);
+                _customizedPedsIni.Load();
                 string sectionName = _lastSavedSection;
 
                 // If no section has been saved yet in this session or current section does not exist in INI:
-                if (string.IsNullOrWhiteSpace(sectionName) || !ini.GetSectionNames().Contains(sectionName, StringComparer.OrdinalIgnoreCase))
+                if (string.IsNullOrWhiteSpace(sectionName) || !_customizedPedsIni.GetSectionNames().Contains(sectionName, StringComparer.OrdinalIgnoreCase))
                 {
                     string modelName = _modelListItem.SelectedItem ?? "UnknownPed";
                     string defaultSuggestion = $"{modelName}_a";
@@ -1654,50 +1781,50 @@ namespace AdvancedPedStudio
                         sectionName = defaultSuggestion;
                     }
 
-                    ini.SetValue(sectionName, "FriendlyName", sectionName);
-                    ini.SetValue(sectionName, "Model", modelName);
-                    ini.SetValue(sectionName, "Option", "a");
+                    _customizedPedsIni.SetValue(sectionName, "FriendlyName", sectionName);
+                    _customizedPedsIni.SetValue(sectionName, "Model", modelName);
+                    _customizedPedsIni.SetValue(sectionName, "Option", "a");
 
                     // Save components and props as well so the new section is complete
                     foreach (int compId in _componentIds)
                     {
-                        int drawable = _drawableSliders.ContainsKey(compId) && _drawableSliders[compId].Items.Count > 0
-                            ? _drawableSliders[compId].SelectedItem
-                            : Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed, compId);
+                        int drawable = _drawableSliders.TryGetValue(compId, out var dSlider) && dSlider.Items.Count > 0
+                            ? dSlider.SelectedItem
+                            : Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed.Handle, compId);
 
-                        int texture = _textureSliders.ContainsKey(compId) && _textureSliders[compId].Items.Count > 0
-                            ? _textureSliders[compId].SelectedItem
-                            : Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed, compId);
+                        int texture = _textureSliders.TryGetValue(compId, out var tSlider) && tSlider.Items.Count > 0
+                            ? tSlider.SelectedItem
+                            : Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed.Handle, compId);
 
-                        ini.SetValue(sectionName, $"Component_{compId}", $"{drawable},{texture}");
-                        ini.SetValue(sectionName, $"Component_{compId}_Drawable", drawable);
-                        ini.SetValue(sectionName, $"Component_{compId}_Texture", texture);
+                        _customizedPedsIni.SetValue(sectionName, $"Component_{compId}", $"{drawable},{texture}");
+                        _customizedPedsIni.SetValue(sectionName, $"Component_{compId}_Drawable", drawable);
+                        _customizedPedsIni.SetValue(sectionName, $"Component_{compId}_Texture", texture);
                     }
 
                     foreach (int propId in _propIds)
                     {
-                        int propIndex = _propSliders.ContainsKey(propId) && _propSliders[propId].Items.Count > 0
-                            ? _propSliders[propId].SelectedItem
-                            : Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed, propId);
+                        int propIndex = _propSliders.TryGetValue(propId, out var pSlider) && pSlider.Items.Count > 0
+                            ? pSlider.SelectedItem
+                            : Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed.Handle, propId);
 
-                        int propTexture = _propTextureSliders.ContainsKey(propId) && _propTextureSliders[propId].Items.Count > 0
-                            ? _propTextureSliders[propId].SelectedItem
-                            : (propIndex >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed, propId) : 0);
+                        int propTexture = _propTextureSliders.TryGetValue(propId, out var ptSlider) && ptSlider.Items.Count > 0
+                            ? ptSlider.SelectedItem
+                            : (propIndex >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed.Handle, propId) : 0);
 
-                        ini.SetValue(sectionName, $"Prop_{propId}", $"{propIndex},{propTexture}");
-                        ini.SetValue(sectionName, $"Prop_{propId}_Index", propIndex);
-                        ini.SetValue(sectionName, $"Prop_{propId}_Texture", propTexture);
+                        _customizedPedsIni.SetValue(sectionName, $"Prop_{propId}", $"{propIndex},{propTexture}");
+                        _customizedPedsIni.SetValue(sectionName, $"Prop_{propId}_Index", propIndex);
+                        _customizedPedsIni.SetValue(sectionName, $"Prop_{propId}_Texture", propTexture);
                     }
                 }
 
-                ini.SetValue(sectionName, "MovementStyle", _currentMovementStyle);
-                ini.SetValue(sectionName, "AnimationType", _currentAnimType ?? "None");
-                ini.SetValue(sectionName, "AnimDict", _currentAnimDict ?? "");
-                ini.SetValue(sectionName, "AnimClip", _currentAnimClip ?? "");
-                ini.SetValue(sectionName, "Scenario", _currentScenario ?? "");
-                ini.SetValue(sectionName, "SavedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+                _customizedPedsIni.SetValue(sectionName, "MovementStyle", _currentMovementStyle);
+                _customizedPedsIni.SetValue(sectionName, "AnimationType", _currentAnimType ?? "None");
+                _customizedPedsIni.SetValue(sectionName, "AnimDict", _currentAnimDict ?? "");
+                _customizedPedsIni.SetValue(sectionName, "AnimClip", _currentAnimClip ?? "");
+                _customizedPedsIni.SetValue(sectionName, "Scenario", _currentScenario ?? "");
+                _customizedPedsIni.SetValue(sectionName, "SavedAt", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
 
-                bool saved = ini.Save();
+                bool saved = _customizedPedsIni.Save();
                 if (saved)
                 {
                     _lastSavedSection = sectionName;
@@ -1726,8 +1853,8 @@ namespace AdvancedPedStudio
 
             _savedPedsMenu.AddSubMenu(_deleteSavedMenu);
 
-            var ini = new SimpleIniFile(_customizedPedsIniPath);
-            List<string> sections = ini.GetSectionNames();
+            _customizedPedsIni.Load();
+            List<string> sections = _customizedPedsIni.GetSectionNames();
 
             if (sections.Count == 0)
             {
@@ -1743,9 +1870,9 @@ namespace AdvancedPedStudio
 
             foreach (string section in sections)
             {
-                string friendlyName = ini.GetValue(section, "FriendlyName", section);
-                string model = ini.GetValue(section, "Model", section);
-                string option = ini.GetValue(section, "Option", "");
+                string friendlyName = _customizedPedsIni.GetValue(section, "FriendlyName", section);
+                string model = _customizedPedsIni.GetValue(section, "Model", section);
+                string option = _customizedPedsIni.GetValue(section, "Option", "");
                 string displayOption = !string.IsNullOrEmpty(option) ? $" (Option {option})" : "";
 
                 string displayTitle = !string.IsNullOrEmpty(friendlyName) ? friendlyName : section;
@@ -1773,8 +1900,8 @@ namespace AdvancedPedStudio
                 _spawnProfileListItem.Items.Clear();
                 _spawnProfileListItem.Add("[Current Ped]");
 
-                var ini = new SimpleIniFile(_customizedPedsIniPath);
-                List<string> sections = ini.GetSectionNames();
+                _customizedPedsIni.Load();
+                List<string> sections = _customizedPedsIni.GetSectionNames();
                 foreach (string sec in sections)
                 {
                     if (!string.IsNullOrWhiteSpace(sec))
@@ -1794,15 +1921,15 @@ namespace AdvancedPedStudio
 
         private void LoadCustomizedPedProfile(string sectionName)
         {
-            var ini = new SimpleIniFile(_customizedPedsIniPath);
-            string friendlyName = ini.GetValue(sectionName, "FriendlyName", sectionName);
-            string modelName = ini.GetValue(sectionName, "Model", "");
+            _customizedPedsIni.Load();
+            string friendlyName = _customizedPedsIni.GetValue(sectionName, "FriendlyName", sectionName);
+            string modelName = _customizedPedsIni.GetValue(sectionName, "Model", "");
             if (string.IsNullOrWhiteSpace(modelName))
             {
                 modelName = sectionName;
             }
 
-            string movementStyle = ini.GetValue(sectionName, "MovementStyle", "(Default)");
+            string movementStyle = _customizedPedsIni.GetValue(sectionName, "MovementStyle", "(Default)");
             _currentMovementStyle = movementStyle;
             if (_movementStyleListItem != null)
             {
@@ -1810,10 +1937,10 @@ namespace AdvancedPedStudio
                 _movementStyleListItem.SelectedIndex = movIdx >= 0 ? movIdx : 0;
             }
 
-            string animType = ini.GetValue(sectionName, "AnimationType", "");
-            string animDict = ini.GetValue(sectionName, "AnimDict", "");
-            string animClip = ini.GetValue(sectionName, "AnimClip", "");
-            string scenario = ini.GetValue(sectionName, "Scenario", "");
+            string animType = _customizedPedsIni.GetValue(sectionName, "AnimationType", "");
+            string animDict = _customizedPedsIni.GetValue(sectionName, "AnimDict", "");
+            string animClip = _customizedPedsIni.GetValue(sectionName, "AnimClip", "");
+            string scenario = _customizedPedsIni.GetValue(sectionName, "Scenario", "");
 
             if (string.IsNullOrEmpty(animType))
             {
@@ -1860,15 +1987,15 @@ namespace AdvancedPedStudio
                 int drawable = -1;
                 int texture = 0;
 
-                string rawDrawable = ini.GetValue(sectionName, $"Component_{compId}_Drawable", "");
+                string rawDrawable = _customizedPedsIni.GetValue(sectionName, $"Component_{compId}_Drawable", "");
                 if (!string.IsNullOrEmpty(rawDrawable)) int.TryParse(rawDrawable, out drawable);
 
-                string rawTexture = ini.GetValue(sectionName, $"Component_{compId}_Texture", "");
+                string rawTexture = _customizedPedsIni.GetValue(sectionName, $"Component_{compId}_Texture", "");
                 if (!string.IsNullOrEmpty(rawTexture)) int.TryParse(rawTexture, out texture);
 
                 if (drawable < 0)
                 {
-                    string combo = ini.GetValue(sectionName, $"Component_{compId}", "");
+                    string combo = _customizedPedsIni.GetValue(sectionName, $"Component_{compId}", "");
                     if (!string.IsNullOrEmpty(combo))
                     {
                         string[] parts = combo.Split(',');
@@ -1886,10 +2013,10 @@ namespace AdvancedPedStudio
             {
                 if (compDrawables.TryGetValue(compId, out int drawable) && drawable >= 0)
                 {
-                    int texture = compTextures.ContainsKey(compId) ? compTextures[compId] : 0;
+                    int texture = compTextures.TryGetValue(compId, out var tex) ? tex : 0;
                     try
                     {
-                        Function.Call(Hash.SET_PED_COMPONENT_VARIATION, targetPed, compId, drawable, texture, 0);
+                        Function.Call(Hash.SET_PED_COMPONENT_VARIATION, targetPed.Handle, compId, drawable, texture, 0);
                     }
                     catch { }
                 }
@@ -1901,15 +2028,15 @@ namespace AdvancedPedStudio
                 int propIndex = -2;
                 int propTexture = 0;
 
-                string rawIndex = ini.GetValue(sectionName, $"Prop_{propId}_Index", "");
+                string rawIndex = _customizedPedsIni.GetValue(sectionName, $"Prop_{propId}_Index", "");
                 if (!string.IsNullOrEmpty(rawIndex)) int.TryParse(rawIndex, out propIndex);
 
-                string rawPropTexture = ini.GetValue(sectionName, $"Prop_{propId}_Texture", "");
+                string rawPropTexture = _customizedPedsIni.GetValue(sectionName, $"Prop_{propId}_Texture", "");
                 if (!string.IsNullOrEmpty(rawPropTexture)) int.TryParse(rawPropTexture, out propTexture);
 
                 if (propIndex < -1)
                 {
-                    string combo = ini.GetValue(sectionName, $"Prop_{propId}", "");
+                    string combo = _customizedPedsIni.GetValue(sectionName, $"Prop_{propId}", "");
                     if (!string.IsNullOrEmpty(combo))
                     {
                         string[] parts = combo.Split(',');
@@ -1922,11 +2049,11 @@ namespace AdvancedPedStudio
                 {
                     if (propIndex == -1)
                     {
-                        Function.Call(Hash.CLEAR_PED_PROP, targetPed, propId);
+                        Function.Call(Hash.CLEAR_PED_PROP, targetPed.Handle, propId);
                     }
                     else if (propIndex >= 0)
                     {
-                        Function.Call(Hash.SET_PED_PROP_INDEX, targetPed, propId, propIndex, propTexture, true);
+                        Function.Call(Hash.SET_PED_PROP_INDEX, targetPed.Handle, propId, propIndex, propTexture, true);
                     }
                 }
                 catch { }
@@ -1940,18 +2067,16 @@ namespace AdvancedPedStudio
                 {
                     int compId = kvp.Key;
                     int dVal = kvp.Value;
-                    int tVal = compTextures.ContainsKey(compId) ? compTextures[compId] : 0;
+                    int tVal = compTextures.TryGetValue(compId, out var tex) ? tex : 0;
 
-                    if (_drawableSliders.ContainsKey(compId) && dVal >= 0)
+                    if (_drawableSliders.TryGetValue(compId, out var dSlider) && dVal >= 0)
                     {
-                        var dSlider = _drawableSliders[compId];
                         int idx = dSlider.Items.IndexOf(dVal);
                         if (idx >= 0) dSlider.SelectedIndex = idx;
                     }
 
-                    if (_textureSliders.ContainsKey(compId))
+                    if (_textureSliders.TryGetValue(compId, out var tSlider))
                     {
-                        var tSlider = _textureSliders[compId];
                         int idx = tSlider.Items.IndexOf(tVal);
                         if (idx >= 0) tSlider.SelectedIndex = idx;
                     }
@@ -1959,19 +2084,17 @@ namespace AdvancedPedStudio
 
                 foreach (int propId in _propIds)
                 {
-                    int actualProp = Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed, propId);
-                    int actualTexture = actualProp >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed, propId) : 0;
+                    int actualProp = Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed.Handle, propId);
+                    int actualTexture = actualProp >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed.Handle, propId) : 0;
 
-                    if (_propSliders.ContainsKey(propId))
+                    if (_propSliders.TryGetValue(propId, out var pSlider))
                     {
-                        var pSlider = _propSliders[propId];
                         int idx = pSlider.Items.IndexOf(actualProp);
                         if (idx >= 0) pSlider.SelectedIndex = idx;
                     }
 
-                    if (_propTextureSliders.ContainsKey(propId))
+                    if (_propTextureSliders.TryGetValue(propId, out var ptSlider))
                     {
-                        var ptSlider = _propTextureSliders[propId];
                         int idx = ptSlider.Items.IndexOf(actualTexture);
                         if (idx >= 0) ptSlider.SelectedIndex = idx;
                     }
@@ -1989,9 +2112,9 @@ namespace AdvancedPedStudio
         {
             try
             {
-                var ini = new SimpleIniFile(_customizedPedsIniPath);
-                string friendlyName = ini.GetValue(sectionName, "FriendlyName", sectionName);
-                bool deleted = ini.DeleteSection(sectionName);
+                _customizedPedsIni.Load();
+                string friendlyName = _customizedPedsIni.GetValue(sectionName, "FriendlyName", sectionName);
+                bool deleted = _customizedPedsIni.DeleteSection(sectionName);
 
                 if (deleted)
                 {
@@ -2048,13 +2171,13 @@ namespace AdvancedPedStudio
 
                     foreach (int compId in _componentIds)
                     {
-                        int drawable = _drawableSliders.ContainsKey(compId) && _drawableSliders[compId].Items.Count > 0
-                            ? _drawableSliders[compId].SelectedItem
-                            : (targetPed != null && targetPed.Exists() ? Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed, compId) : 0);
+                        int drawable = _drawableSliders.TryGetValue(compId, out var dSlider) && dSlider.Items.Count > 0
+                            ? dSlider.SelectedItem
+                            : (targetPed != null && targetPed.Exists() ? Function.Call<int>(Hash.GET_PED_DRAWABLE_VARIATION, targetPed.Handle, compId) : 0);
 
-                        int texture = _textureSliders.ContainsKey(compId) && _textureSliders[compId].Items.Count > 0
-                            ? _textureSliders[compId].SelectedItem
-                            : (targetPed != null && targetPed.Exists() ? Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed, compId) : 0);
+                        int texture = _textureSliders.TryGetValue(compId, out var tSlider) && tSlider.Items.Count > 0
+                            ? tSlider.SelectedItem
+                            : (targetPed != null && targetPed.Exists() ? Function.Call<int>(Hash.GET_PED_TEXTURE_VARIATION, targetPed.Handle, compId) : 0);
 
                         compDrawables[compId] = drawable;
                         compTextures[compId] = texture;
@@ -2062,13 +2185,13 @@ namespace AdvancedPedStudio
 
                     foreach (int propId in _propIds)
                     {
-                        int propIndex = _propSliders.ContainsKey(propId) && _propSliders[propId].Items.Count > 0
-                            ? _propSliders[propId].SelectedItem
-                            : (targetPed != null && targetPed.Exists() ? Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed, propId) : -1);
+                        int propIndex = _propSliders.TryGetValue(propId, out var pSlider) && pSlider.Items.Count > 0
+                            ? pSlider.SelectedItem
+                            : (targetPed != null && targetPed.Exists() ? Function.Call<int>(Hash.GET_PED_PROP_INDEX, targetPed.Handle, propId) : -1);
 
-                        int propTexture = _propTextureSliders.ContainsKey(propId) && _propTextureSliders[propId].Items.Count > 0
-                            ? _propTextureSliders[propId].SelectedItem
-                            : (targetPed != null && targetPed.Exists() && propIndex >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed, propId) : 0);
+                        int propTexture = _propTextureSliders.TryGetValue(propId, out var ptSlider) && ptSlider.Items.Count > 0
+                            ? ptSlider.SelectedItem
+                            : (targetPed != null && targetPed.Exists() && propIndex >= 0 ? Function.Call<int>(Hash.GET_PED_PROP_TEXTURE_INDEX, targetPed.Handle, propId) : 0);
 
                         propIndices[propId] = propIndex;
                         propTextures[propId] = propTexture;
@@ -2076,14 +2199,14 @@ namespace AdvancedPedStudio
                 }
                 else
                 {
-                    var ini = new SimpleIniFile(_customizedPedsIniPath);
-                    displayName = ini.GetValue(sectionOrSpecial, "FriendlyName", sectionOrSpecial);
-                    modelName = ini.GetValue(sectionOrSpecial, "Model", sectionOrSpecial);
-                    movementStyle = ini.GetValue(sectionOrSpecial, "MovementStyle", "(Default)");
-                    animType = ini.GetValue(sectionOrSpecial, "AnimationType", "");
-                    animDict = ini.GetValue(sectionOrSpecial, "AnimDict", "");
-                    animClip = ini.GetValue(sectionOrSpecial, "AnimClip", "");
-                    scenario = ini.GetValue(sectionOrSpecial, "Scenario", "");
+                    _customizedPedsIni.Load();
+                    displayName = _customizedPedsIni.GetValue(sectionOrSpecial, "FriendlyName", sectionOrSpecial);
+                    modelName = _customizedPedsIni.GetValue(sectionOrSpecial, "Model", sectionOrSpecial);
+                    movementStyle = _customizedPedsIni.GetValue(sectionOrSpecial, "MovementStyle", "(Default)");
+                    animType = _customizedPedsIni.GetValue(sectionOrSpecial, "AnimationType", "");
+                    animDict = _customizedPedsIni.GetValue(sectionOrSpecial, "AnimDict", "");
+                    animClip = _customizedPedsIni.GetValue(sectionOrSpecial, "AnimClip", "");
+                    scenario = _customizedPedsIni.GetValue(sectionOrSpecial, "Scenario", "");
 
                     if (string.IsNullOrEmpty(animType))
                     {
@@ -2097,15 +2220,15 @@ namespace AdvancedPedStudio
                         int drawable = -1;
                         int texture = 0;
 
-                        string rawDrawable = ini.GetValue(sectionOrSpecial, $"Component_{compId}_Drawable", "");
+                        string rawDrawable = _customizedPedsIni.GetValue(sectionOrSpecial, $"Component_{compId}_Drawable", "");
                         if (!string.IsNullOrEmpty(rawDrawable)) int.TryParse(rawDrawable, out drawable);
 
-                        string rawTexture = ini.GetValue(sectionOrSpecial, $"Component_{compId}_Texture", "");
+                        string rawTexture = _customizedPedsIni.GetValue(sectionOrSpecial, $"Component_{compId}_Texture", "");
                         if (!string.IsNullOrEmpty(rawTexture)) int.TryParse(rawTexture, out texture);
 
                         if (drawable < 0)
                         {
-                            string combo = ini.GetValue(sectionOrSpecial, $"Component_{compId}", "");
+                            string combo = _customizedPedsIni.GetValue(sectionOrSpecial, $"Component_{compId}", "");
                             if (!string.IsNullOrEmpty(combo))
                             {
                                 string[] parts = combo.Split(',');
@@ -2123,15 +2246,15 @@ namespace AdvancedPedStudio
                         int propIndex = -2;
                         int propTexture = 0;
 
-                        string rawIndex = ini.GetValue(sectionOrSpecial, $"Prop_{propId}_Index", "");
+                        string rawIndex = _customizedPedsIni.GetValue(sectionOrSpecial, $"Prop_{propId}_Index", "");
                         if (!string.IsNullOrEmpty(rawIndex)) int.TryParse(rawIndex, out propIndex);
 
-                        string rawPropTexture = ini.GetValue(sectionOrSpecial, $"Prop_{propId}_Texture", "");
+                        string rawPropTexture = _customizedPedsIni.GetValue(sectionOrSpecial, $"Prop_{propId}_Texture", "");
                         if (!string.IsNullOrEmpty(rawPropTexture)) int.TryParse(rawPropTexture, out propTexture);
 
                         if (propIndex < -1)
                         {
-                            string combo = ini.GetValue(sectionOrSpecial, $"Prop_{propId}", "");
+                            string combo = _customizedPedsIni.GetValue(sectionOrSpecial, $"Prop_{propId}", "");
                             if (!string.IsNullOrEmpty(combo))
                             {
                                 string[] parts = combo.Split(',');
@@ -2192,10 +2315,10 @@ namespace AdvancedPedStudio
                 {
                     if (compDrawables.TryGetValue(compId, out int drawable) && drawable >= 0)
                     {
-                        int texture = compTextures.ContainsKey(compId) ? compTextures[compId] : 0;
+                        int texture = compTextures.TryGetValue(compId, out var tex) ? tex : 0;
                         try
                         {
-                            Function.Call(Hash.SET_PED_COMPONENT_VARIATION, spawnedPed, compId, drawable, texture, 0);
+                            Function.Call(Hash.SET_PED_COMPONENT_VARIATION, spawnedPed.Handle, compId, drawable, texture, 0);
                         }
                         catch { }
                     }
@@ -2206,16 +2329,16 @@ namespace AdvancedPedStudio
                 {
                     if (propIndices.TryGetValue(propId, out int propIdx))
                     {
-                        int pTex = propTextures.ContainsKey(propId) ? propTextures[propId] : 0;
+                        int pTex = propTextures.TryGetValue(propId, out var tex) ? tex : 0;
                         try
                         {
                             if (propIdx == -1)
                             {
-                                Function.Call(Hash.CLEAR_PED_PROP, spawnedPed, propId);
+                                Function.Call(Hash.CLEAR_PED_PROP, spawnedPed.Handle, propId);
                             }
                             else if (propIdx >= 0)
                             {
-                                Function.Call(Hash.SET_PED_PROP_INDEX, spawnedPed, propId, propIdx, pTex, true);
+                                Function.Call(Hash.SET_PED_PROP_INDEX, spawnedPed.Handle, propId, propIdx, pTex, true);
                             }
                         }
                         catch { }
@@ -2253,7 +2376,7 @@ namespace AdvancedPedStudio
                         }
                         if (Function.Call<bool>(Hash.HAS_ANIM_DICT_LOADED, animDict))
                         {
-                            Function.Call(Hash.TASK_PLAY_ANIM, spawnedPed, animDict, animClip, 8.0f, -8.0f, -1, 1, 0.0f, false, false, false);
+                            Function.Call(Hash.TASK_PLAY_ANIM, spawnedPed.Handle, animDict, animClip, 8.0f, -8.0f, -1, 1, 0.0f, false, false, false);
                             Function.Call(Hash.REMOVE_ANIM_DICT, animDict);
                         }
                     }
@@ -2274,3 +2397,4 @@ namespace AdvancedPedStudio
         }
     }
 }
+

@@ -101,6 +101,7 @@ graph TD
    └── scripts/                     <-- Scripts directory
        ├── AdvancedPedStudio.dll    <-- Mod binary
        ├── LemonUI.SHVDN3.dll       <-- UI library
+       ├── AdvancedPedStudio.ini    <-- Configuration (ActivationKey, hotkeys)
        ├── pedmodels.txt            <-- Ped model pool (auto-created if missing)
        ├── customizedpeds.ini       <-- Saved presets file (auto-created upon save)
        └── AdvancedPedStudio.log    <-- Runtime diagnostic log
@@ -116,14 +117,14 @@ graph TD
 
 | Key / Input | Action | Description |
 | :--- | :--- | :--- |
-| **F11** | **Open / Close Studio** | Toggles the studio UI and automatically spawns/despawns the 3D preview ped. |
+| **F11** *(Configurable)* | **Open / Close Studio** | Toggles the studio UI and automatically spawns/despawns the 3D preview ped. Custom hotkey can be configured in `AdvancedPedStudio.ini`. |
 | **↑ / ↓** | **Menu Navigation** | Moves up and down across menu items, sliders, and submenus. |
 | **← / →** | **Change Value / Sliders** | Cycles through ped models, walk styles, animations, clothing drawable IDs, and textures. |
 | **Enter** / **Numpad 5** | **Select / Activate** | Enters submenus, triggers saves, activates animations, or spawns selected models into the world. |
 | **Backspace** / **Esc** | **Back / Close Submenu** | Navigates back up one menu level or closes the current view. |
 
 > [!NOTE]
-> Conflicting GTA V gameplay controls (such as bringing up the mobile phone) are automatically suppressed while browsing the studio menu.
+> The activation hotkey can be customized to any key (e.g., `F6`, `F9`, `K`, `Insert`) inside `scripts/AdvancedPedStudio.ini`. Conflicting GTA V gameplay controls (such as bringing up the mobile phone) are automatically suppressed while browsing the studio menu.
 
 ---
 
@@ -270,24 +271,45 @@ All configuration files reside in your GTA V `scripts/` directory:
 
 ```text
 scripts/
-├── pedmodels.txt        # Plaintext list of model names
-├── customizedpeds.ini   # INI configuration storing saved presets
-└── AdvancedPedStudio.log # Runtime diagnostics and operation log
+├── AdvancedPedStudio.ini # Main configuration (ActivationKey, hotkeys)
+├── pedmodels.txt         # Plaintext list of model names
+├── customizedpeds.ini    # INI configuration storing saved presets
+└── AdvancedPedStudio.log  # Runtime diagnostics and operation log
 ```
 
-### 1. `pedmodels.txt`
+### 1. `AdvancedPedStudio.ini`
+
+Main configuration file controlling mod behavior and keybindings:
+
+```ini
+; ============================================================
+; AdvancedPedStudio - Configuration Settings
+; ============================================================
+
+[Settings]
+; Key to open and close the Advanced Ped Studio menu.
+; Default: F11
+; Supported keys include any valid .NET System.Windows.Forms.Keys name:
+; Examples: F11, F10, F9, F8, F7, F6, F5, F3, K, O, J, Insert, PageUp
+ActivationKey = F11
+```
+
+---
+
+### 2. `pedmodels.txt`
 
 Plaintext file containing ped model names. Delimited by commas, newlines, semicolons, or tabs.
 
 ```text
 s_f_y_stripper_01, s_f_y_stripper_02, s_f_y_stripperlite, mp_f_freemode_01, mp_m_freemode_01,
 a_f_y_topless_01, a_f_y_beach_01, a_f_y_fitness_01, a_f_y_tourist_01, a_f_y_hippie_01,
-a_m_y_beach_01, s_m_y_dealer_01, s_m_y_cop_01, u_f_y_danceburl_01
+a_f_y_bevhills_01, a_f_y_clubcust_01, a_f_y_gencaspat_01, a_f_y_smartcaspat_01, a_m_y_beach_01,
+s_m_y_dealer_01, s_m_y_cop_01, u_f_y_danceburl_01
 ```
 
 ---
 
-### 2. `customizedpeds.ini`
+### 3. `customizedpeds.ini`
 
 Structured INI file storing full appearance, movement, and animation parameters. Supports both combined and discrete keys for compatibility with external script tools:
 
@@ -362,13 +384,13 @@ Prop_7_Texture = 0
 
 ---
 
-### 3. `AdvancedPedStudio.log`
+### 4. `AdvancedPedStudio.log`
 
 Contains timestamped execution traces with atomic file write-through:
 
 ```text
 [2026-09-03 22:15:01.120] Loaded 27 models from pedmodels.txt
-[2026-09-03 22:15:01.142] AdvancedPedStudio initialized successfully. Press F11 to open menu.
+[2026-09-03 22:15:01.142] AdvancedPedStudio initialized successfully. Activation key: F11.
 [2026-09-03 22:16:40.890] Successfully saved customized ped [Purple Stripper Test] (Friendly: Purple Stripper Test, Model: s_f_y_stripper_01) to scripts/customizedpeds.ini
 [2026-09-03 22:17:15.304] Saved movement style [move_f@posh@] and animation [Animation / mini@strip_club@pole_dance@pole_dance1 / ] to profile [Purple Stripper Test]
 [2026-09-03 22:18:02.450] Spawned fully customized and animated ped [Purple Stripper Test] (Model: s_f_y_stripper_01) at X: 4850.12, Y: -4930.50, Z: 2.15
@@ -387,6 +409,7 @@ AdvancedPedStudio/
 ├── Properties/
 │   └── AssemblyInfo.cs           # Assembly metadata & versioning
 ├── class.cs                       # Complete source code (UI, Sliders, INI, Spawner, Anti-Fall)
+├── AdvancedPedStudio.ini          # Configuration settings template
 ├── pedmodels.txt                  # Default model list
 ├── customizedpeds.ini             # Preset storage file
 └── README.md                      # Project documentation & walkthrough

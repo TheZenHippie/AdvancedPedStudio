@@ -70,6 +70,11 @@
     <Compile Include="class.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="AdvancedPedStudio.ini" />
+    <None Include="customizedpeds.ini" />
+    <None Include="pedmodels.txt" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup Condition="'$(GTAV_DIR)' != '' and Exists('$(GTAV_DIR)\scripts')">
     <PostBuildEvent>COPY "$(TargetPath)" "$(GTAV_DIR)\scripts"</PostBuildEvent>
